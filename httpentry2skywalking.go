@@ -31,7 +31,7 @@ func NewHttpEntry(serviceName string) *HttpEntry {
 const componentIDGOHttpServer = 5005
 
 func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
-	newReporter, err := reporter.NewGRPCReporter("127.0.0.1:8050")
+	newReporter, err := reporter.NewGRPCReporter("skywalking-oap:11800")
 
 	if err != nil {
 		log.Fatalf("new reporter error %v \n", err)
@@ -67,9 +67,23 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Set("tracer", tracer)
+		//c.Set("advo", c.Request().Body.AdVo)
+		requestUrlArray := strings.Split(c.Request().RequestURI, "?")
+		requestParams := getRequestParams(requestUrlArray)
+
+		var requestParamMap = make(map[string]string) /*创建集合 */
+		if len(requestParams) != 0 {
+			requestParamArray := strings.Split(requestParams, "&")
+			for requestParamIndex := range requestParamArray {
+				requestParamKeyValue := strings.Split(requestParamArray[requestParamIndex], "=")
+				if len(requestParamKeyValue) >= 2 {
+					requestParamMap[requestParamKeyValue[0]] = requestParamKeyValue[1]
+				}
+			}
+	}
 
 		span, ctx, err := tracer.CreateEntrySpan(c.Request().Context(),
-			fmt.Sprintf("/%s%s", c.Request().Method, strings.Split(c.Request().RequestURI, "?")[0]),
+			getoperationName(c, requestParamMap, requestUrlArray),
 			func() (string, error) {
 				return c.Request().Header.Get(propagation.Header), nil
 			})
@@ -84,6 +98,10 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		span.Tag(go2sky.TagURL, c.Request().Host+c.Request().URL.Path)
 		span.SetSpanLayer(v3.SpanLayer_Http)
 		c.SetRequest(c.Request().WithContext(ctx))
+		span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s,请求参数:%+v", c.Request().RemoteAddr,
+			requestParams))
+		//	span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求地址:%s,",  c.Request().RequestURI))
+
 		defer func() {
 			code := c.Response().Status
 			if code >= 400 {
@@ -97,4 +115,20 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		return
 
 	}
+}
+
+func getoperationName(c echo.Context, requestParamMap map[string]string, requestUrlArray []string) string {
+	if requestParamMap["os"] == "" {
+		return fmt.Sprintf("%s%s", c.Request().Method, requestUrlArray[0])
+	} else {
+		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, requestUrlArray[0])
+	}
+}
+
+func getRequestParams(requestUrlArray []string) string {
+	condition := len(requestUrlArray) > 1
+	if condition {
+		return requestUrlArray[1]
+	}
+	return ""
 }

@@ -31,7 +31,7 @@ func EndSpantoSkywalking(reqSpan go2sky.Span, url string, resp string, isNormal 
 	if !isNormal {
 		reqSpan.Error(time.Now(), "[HttpRequest]", fmt.Sprintf("结束请求,返回异常: %s", err.Error()))
 	} else {
-		reqSpan.Log(time.Now(), "[DB Response]", fmt.Sprintf("结束请求,响应结果: %s", resp))
+		reqSpan.Log(time.Now(), "[Http Response]", fmt.Sprintf("结束请求,响应结果: %s", resp))
 	}
 	reqSpan.End()
 }

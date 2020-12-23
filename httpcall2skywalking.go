@@ -4,16 +4,21 @@ import (
 	"net/http"
 	"time"
 
+	"fmt"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo"
-	"fmt"
+	"errors"
 )
 
 func StartSpantoSkyWalking(ctx echo.Context, req *http.Request, url string, params []string, remoteService string) (go2sky.Span, error) {
 	// op_name 是每一个操作的名称
-	tracer := ctx.Get("tracer").(*go2sky.Tracer)
+	tracerFromCtx := ctx.Get("tracer")
+	if tracerFromCtx == nil {
+		return nil, errors.New("can not get tracer")
+	}
+	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), url, remoteService, func(header string) error {
 		req.Header.Set(propagation.Header, header)
 		return nil
@@ -26,10 +31,13 @@ func StartSpantoSkyWalking(ctx echo.Context, req *http.Request, url string, para
 }
 
 func EndSpantoSkywalking(reqSpan go2sky.Span, url string, resp string, isNormal bool, err error) {
+	if reqSpan == nil {
+		return
+	}
 	reqSpan.Tag(go2sky.TagHTTPMethod, http.MethodPost)
 	reqSpan.Tag(go2sky.TagURL, url)
 	if !isNormal {
-		reqSpan.Error(time.Now(), "[HttpRequest]", fmt.Sprintf("结束请求,返回异常: %s", err.Error()))
+		reqSpan.Error(time.Now(), "[Http Request]", fmt.Sprintf("结束请求,返回异常: %s", err.Error()))
 	} else {
 		reqSpan.Log(time.Now(), "[Http Response]", fmt.Sprintf("结束请求,响应结果: %s", resp))
 	}

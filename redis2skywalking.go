@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/redis.v5"
 	"strconv"
+	"errors"
 )
 
 type RedisProxy struct {
@@ -290,7 +291,11 @@ func (f RedisProxy) HIncrBy(ctx echo.Context, key, field string, incr int64) *re
 
 func StartSpantoSkyWalkingForRedis(ctx echo.Context, queryStr string, db string) (go2sky.Span, error) {
 	// op_name 是每一个操作的名称
-	tracer := ctx.Get("tracer").(*go2sky.Tracer)
+	tracerFromCtx := ctx.Get("tracer")
+	if tracerFromCtx == nil {
+		return nil,  errors.New("can not get tracer")
+	}
+	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), queryStr, db, func(header string) error {
 		ctx.Request().Header.Set(propagation.Header, header)
 		return nil
@@ -303,6 +308,9 @@ func StartSpantoSkyWalkingForRedis(ctx echo.Context, queryStr string, db string)
 }
 
 func EndSpantoSkywalkingForRedis(reqSpan go2sky.Span, queryStr string, isNormal bool, err error) {
+	if reqSpan == nil {
+		return
+	}
 	reqSpan.Tag(go2sky.TagURL, queryStr)
 	if !isNormal {
 		reqSpan.Error(time.Now(), "[Redis Response]", fmt.Sprintf("结束请求,响应结果: %s", err))

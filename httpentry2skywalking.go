@@ -7,11 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"bytes"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	"github.com/SkyAPM/go2sky/reporter"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo"
+	"io/ioutil"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -31,8 +33,8 @@ func NewHttpEntry(serviceName string) *HttpEntry {
 const componentIDGOHttpServer = 5005
 
 func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
-	newReporter, err := reporter.NewGRPCReporter("skywalking-oap:11800")
 
+	newReporter, err := reporter.NewGRPCReporter("skywalking-oap:11800")
 	if err != nil {
 		log.Fatalf("new reporter error %v \n", err)
 	} else {
@@ -50,9 +52,9 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 
 func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
-
 		reporter := GRPCReporter
 		if reporter == nil {
+			err = next(c)
 			return
 		}
 
@@ -98,8 +100,13 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		span.Tag(go2sky.TagURL, c.Request().Host+c.Request().URL.Path)
 		span.SetSpanLayer(v3.SpanLayer_Http)
 		c.SetRequest(c.Request().WithContext(ctx))
-		span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s,请求参数:%+v", c.Request().RemoteAddr,
-			requestParams))
+
+		bodyBytes, _ := ioutil.ReadAll(c.Request().Body)
+		c.Request().Body.Close()  //  这里调用Close
+		c.Request().Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s,请求参数:%+v, \r\n payload: %s", c.Request().RemoteAddr,
+			requestParams, string(bodyBytes)))
 		//	span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求地址:%s,",  c.Request().RequestURI))
 
 		defer func() {

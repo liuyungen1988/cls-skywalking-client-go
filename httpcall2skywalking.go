@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"errors"
 	"fmt"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo"
-	"errors"
 )
 
 func StartSpantoSkyWalking(ctx echo.Context, req *http.Request, url string, params []string, remoteService string) (go2sky.Span, error) {

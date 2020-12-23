@@ -43,7 +43,7 @@ func (f DbProxy) Query(ctx echo.Context, query squirrel.SelectBuilder) (*sql.Row
 
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(ctx, queryStr+ "\r\n Parameters: " + result, os.Getenv("DB_URL"))
 	if spanErr != nil {
-		log.Fatalf("StartSpantoSkyWalkingForDb error: %v \n", spanErr)
+		log.Printf("StartSpantoSkyWalkingForDb error: %v \n", spanErr)
 	}
 
 	rows, err := query.RunWith(f.getDb()).Query()

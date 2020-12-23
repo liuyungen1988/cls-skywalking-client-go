@@ -9,9 +9,9 @@ import (
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo"
 
+	"errors"
 	"gopkg.in/redis.v5"
 	"strconv"
-	"errors"
 )
 
 type RedisProxy struct {

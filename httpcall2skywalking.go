@@ -9,10 +9,15 @@ import (
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
-func StartSpantoSkyWalking(ctx echo.Context, req *http.Request, url string, params []string, remoteService string) (go2sky.Span, error) {
+func StartSpantoSkyWalking(url string, params []string, remoteService string) (go2sky.Span, error) {
+	originCtx := GetContext()
+	if originCtx == nil {
+		return nil, errors.New("can not get Context")
+	}
+	ctx := originCtx.(echo.Context)
 	// op_name 是每一个操作的名称
 	tracerFromCtx := ctx.Get("tracer")
 	if tracerFromCtx == nil {
@@ -20,7 +25,7 @@ func StartSpantoSkyWalking(ctx echo.Context, req *http.Request, url string, para
 	}
 	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), url, remoteService, func(header string) error {
-		req.Header.Set(propagation.Header, header)
+		ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
 		return nil
 	})
 	reqSpan.SetComponent(2)                 //HttpClient,看 https://github.com/apache/skywalking/blob/master/docs/en/guides/Component-library-settings.md ， 目录在component-libraries.yml文件配置

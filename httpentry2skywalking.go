@@ -15,7 +15,7 @@ import (
 	"github.com/SkyAPM/go2sky/propagation"
 	"github.com/SkyAPM/go2sky/reporter"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -74,6 +74,9 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Set("tracer", tracer)
+		c.Set("header", newSafeHeader(c.Request().Header))
+		SetContext(c)
+		defer DeleteContext()
 		//c.Set("advo", c.Request().Body.AdVo)
 		requestUrlArray := strings.Split(c.Request().RequestURI, "?")
 		requestParams := getRequestParams(requestUrlArray)
@@ -92,7 +95,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		span, ctx, err := tracer.CreateEntrySpan(c.Request().Context(),
 			getoperationName(c, requestParamMap, requestUrlArray),
 			func() (string, error) {
-				return c.Request().Header.Get(propagation.Header), nil
+				return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
 			})
 
 		if err != nil {

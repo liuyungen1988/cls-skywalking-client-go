@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"errors"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
-	"github.com/labstack/echo"
-
-	"errors"
-	"gopkg.in/redis.v5"
 	"strconv"
+	"gopkg.in/redis.v5"
+	"github.com/labstack/echo/v4"
 )
 
 type RedisProxy struct {
@@ -29,8 +28,19 @@ func (f RedisProxy) getRedisCache() *redis.Client {
 	return f.RedisCache
 }
 
-func (f RedisProxy) Get(ctx echo.Context, key string) *redis.StringCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, "Get "+key, f.getRedisCache().String())
+func (f RedisProxy) Exists(key string) *redis.BoolCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("Exists "+key, f.getRedisCache().String())
+
+	cmd := f.getRedisCache().Exists(key)
+
+	_, err := cmd.Result()
+	defer processResult(span, "Exists "+key,
+		err)
+	return cmd
+}
+
+func (f RedisProxy) Get(key string) *redis.StringCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("Get "+key, f.getRedisCache().String())
 
 	cmd := f.getRedisCache().Get(key)
 
@@ -40,8 +50,8 @@ func (f RedisProxy) Get(ctx echo.Context, key string) *redis.StringCmd {
 	return cmd
 }
 
-func (f RedisProxy) GetRange(ctx echo.Context, key string, start, end int64) *redis.StringCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("GetRange %s, start %s, end %s", key, strconv.FormatInt(start, 10), strconv.FormatInt(end, 10)), f.getRedisCache().String())
+func (f RedisProxy) GetRange(key string, start, end int64) *redis.StringCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("GetRange %s, start %s, end %s", key, strconv.FormatInt(start, 10), strconv.FormatInt(end, 10)), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().GetRange(key, start, end)
 
@@ -51,8 +61,8 @@ func (f RedisProxy) GetRange(ctx echo.Context, key string, start, end int64) *re
 	return cmd
 }
 
-func (f RedisProxy) GetSet(ctx echo.Context, key string, value interface{}) *redis.StringCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, "GetSet "+key, f.getRedisCache().String())
+func (f RedisProxy) GetSet(key string, value interface{}) *redis.StringCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("GetSet "+key, f.getRedisCache().String())
 
 	cmd := f.getRedisCache().GetSet(key, value)
 
@@ -62,8 +72,8 @@ func (f RedisProxy) GetSet(ctx echo.Context, key string, value interface{}) *red
 	return cmd
 }
 
-func (f RedisProxy) MGet(ctx echo.Context, keys ...string) *redis.SliceCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("MGet %v", keys), f.getRedisCache().String())
+func (f RedisProxy) MGet(keys ...string) *redis.SliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("MGet %v", keys), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().MGet(keys...)
 
@@ -73,8 +83,8 @@ func (f RedisProxy) MGet(ctx echo.Context, keys ...string) *redis.SliceCmd {
 	return cmd
 }
 
-func (f RedisProxy) MSet(ctx echo.Context, pairs ...interface{}) *redis.StatusCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("MSet %v", pairs), f.getRedisCache().String())
+func (f RedisProxy) MSet(pairs ...interface{}) *redis.StatusCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("MSet %v", pairs), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().MSet(pairs...)
 
@@ -84,8 +94,8 @@ func (f RedisProxy) MSet(ctx echo.Context, pairs ...interface{}) *redis.StatusCm
 	return cmd
 }
 
-func (f RedisProxy) MSetNX(ctx echo.Context, pairs ...interface{}) *redis.BoolCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("MSetNX %v", pairs), f.getRedisCache().String())
+func (f RedisProxy) MSetNX(pairs ...interface{}) *redis.BoolCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("MSetNX %v", pairs), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().MSetNX(pairs...)
 
@@ -99,8 +109,8 @@ func (f RedisProxy) MSetNX(ctx echo.Context, pairs ...interface{}) *redis.BoolCm
 //
 // Use expiration for `SETEX`-like behavior.
 // Zero expiration means the key has no expiration time.
-func (f RedisProxy) Set(ctx echo.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("Set %s, value %v", key,
+func (f RedisProxy) Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("Set %s, value %v", key,
 		value), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().Set(key, value, expiration)
@@ -112,8 +122,8 @@ func (f RedisProxy) Set(ctx echo.Context, key string, value interface{}, expirat
 	return cmd
 }
 
-func (f RedisProxy) SetRange(ctx echo.Context, key string, offset int64, value string) *redis.IntCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("SetRange %s, offset %s,  value %s", key, strconv.FormatInt(offset, 10), value), f.getRedisCache().String())
+func (f RedisProxy) SetRange(key string, offset int64, value string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("SetRange %s, offset %s,  value %s", key, strconv.FormatInt(offset, 10), value), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().SetRange(key, offset, value)
 
@@ -123,8 +133,8 @@ func (f RedisProxy) SetRange(ctx echo.Context, key string, offset int64, value s
 	return cmd
 }
 
-func (f RedisProxy) HDel(ctx echo.Context, key string, fields ...string) *redis.IntCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HDel %s, fields %v", key, fields), f.getRedisCache().String())
+func (f RedisProxy) HDel(key string, fields ...string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HDel %s, fields %v", key, fields), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HDel(key, fields...)
 
@@ -134,8 +144,8 @@ func (f RedisProxy) HDel(ctx echo.Context, key string, fields ...string) *redis.
 	return cmd
 }
 
-func (f RedisProxy) HExists(ctx echo.Context, key, field string) *redis.BoolCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HExists %s, field %s", key, field), f.getRedisCache().String())
+func (f RedisProxy) HExists(key, field string) *redis.BoolCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HExists %s, field %s", key, field), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HExists(key, field)
 
@@ -145,8 +155,8 @@ func (f RedisProxy) HExists(ctx echo.Context, key, field string) *redis.BoolCmd 
 	return cmd
 }
 
-func (f RedisProxy) HGet(ctx echo.Context, key, field string) *redis.StringCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HGet %s, field %s", key, field), f.getRedisCache().String())
+func (f RedisProxy) HGet(key, field string) *redis.StringCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HGet %s, field %s", key, field), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HGet(key, field)
 
@@ -156,8 +166,8 @@ func (f RedisProxy) HGet(ctx echo.Context, key, field string) *redis.StringCmd {
 	return cmd
 }
 
-func (f RedisProxy) HGetAll(ctx echo.Context, key string) *redis.StringStringMapCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, "HGetAll  "+key, f.getRedisCache().String())
+func (f RedisProxy) HGetAll(key string) *redis.StringStringMapCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("HGetAll  "+key, f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HGetAll(key)
 
@@ -167,8 +177,8 @@ func (f RedisProxy) HGetAll(ctx echo.Context, key string) *redis.StringStringMap
 	return cmd
 }
 
-func (f RedisProxy) HMGet(ctx echo.Context, key string, fields ...string) *redis.SliceCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HMGet %s, fields %v ", key, fields), f.getRedisCache().String())
+func (f RedisProxy) HMGet(key string, fields ...string) *redis.SliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HMGet %s, fields %v ", key, fields), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HMGet(key, fields...)
 
@@ -178,8 +188,8 @@ func (f RedisProxy) HMGet(ctx echo.Context, key string, fields ...string) *redis
 	return cmd
 }
 
-func (f RedisProxy) HMSet(ctx echo.Context, key string, fields map[string]string) *redis.StatusCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, "HMSet  "+key, f.getRedisCache().String())
+func (f RedisProxy) HMSet(key string, fields map[string]string) *redis.StatusCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("HMSet  "+key, f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HMSet(key, fields)
 
@@ -189,8 +199,8 @@ func (f RedisProxy) HMSet(ctx echo.Context, key string, fields map[string]string
 	return cmd
 }
 
-func (f RedisProxy) HSet(ctx echo.Context, key, field string, value interface{}) *redis.BoolCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HSet %s, fields %s, value %v ", key, field, value), f.getRedisCache().String())
+func (f RedisProxy) HSet(key, field string, value interface{}) *redis.BoolCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HSet %s, fields %s, value %v ", key, field, value), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HSet(key, field, value)
 
@@ -200,8 +210,8 @@ func (f RedisProxy) HSet(ctx echo.Context, key, field string, value interface{})
 	return cmd
 }
 
-func (f RedisProxy) HSetNX(ctx echo.Context, key, field string, value interface{}) *redis.BoolCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HSetNX %s, fields %s, value %v ", key, field, value), f.getRedisCache().String())
+func (f RedisProxy) HSetNX(key, field string, value interface{}) *redis.BoolCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HSetNX %s, fields %s, value %v ", key, field, value), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HSetNX(key, field, value)
 
@@ -211,8 +221,8 @@ func (f RedisProxy) HSetNX(ctx echo.Context, key, field string, value interface{
 	return cmd
 }
 
-func (f RedisProxy) LPop(ctx echo.Context, key string) *redis.StringCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, "LPop  "+key, f.getRedisCache().String())
+func (f RedisProxy) LPop(key string) *redis.StringCmd {
+	span, _ := StartSpantoSkyWalkingForRedis("LPop  "+key, f.getRedisCache().String())
 
 	cmd := f.getRedisCache().LPop(key)
 
@@ -222,8 +232,8 @@ func (f RedisProxy) LPop(ctx echo.Context, key string) *redis.StringCmd {
 	return cmd
 }
 
-func (f RedisProxy) LPush(ctx echo.Context, key string, values ...interface{}) *redis.IntCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("LPush %s, values %v ", key, values), f.getRedisCache().String())
+func (f RedisProxy) LPush(key string, values ...interface{}) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("LPush %s, values %v ", key, values), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().LPush(key, values...)
 
@@ -233,8 +243,8 @@ func (f RedisProxy) LPush(ctx echo.Context, key string, values ...interface{}) *
 	return cmd
 }
 
-func (f RedisProxy) LPushX(ctx echo.Context, key string, value interface{}) *redis.IntCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("LPushX %s, value %v ", key, value), f.getRedisCache().String())
+func (f RedisProxy) LPushX(key string, value interface{}) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("LPushX %s, value %v ", key, value), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().LPushX(key, value)
 
@@ -244,8 +254,8 @@ func (f RedisProxy) LPushX(ctx echo.Context, key string, value interface{}) *red
 	return cmd
 }
 
-func (f RedisProxy) LRange(ctx echo.Context, key string, start, stop int64) *redis.StringSliceCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("LRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
+func (f RedisProxy) LRange(key string, start, stop int64) *redis.StringSliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("LRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().LRange(key, start, stop)
 
@@ -255,9 +265,8 @@ func (f RedisProxy) LRange(ctx echo.Context, key string, start, stop int64) *red
 	return cmd
 }
 
-
-func (f RedisProxy) ZRange(ctx echo.Context, key string, start, stop int64) *redis.StringSliceCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("ZRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
+func (f RedisProxy) ZRange(key string, start, stop int64) *redis.StringSliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().ZRange(key, start, stop)
 
@@ -267,8 +276,8 @@ func (f RedisProxy) ZRange(ctx echo.Context, key string, start, stop int64) *red
 	return cmd
 }
 
-func (f RedisProxy) ZRangeWithScores(ctx echo.Context, key string, start, stop int64) *redis.ZSliceCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("ZRangeWithScores %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
+func (f RedisProxy) ZRangeWithScores(key string, start, stop int64) *redis.ZSliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZRangeWithScores %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().ZRangeWithScores(key, start, stop)
 
@@ -278,8 +287,8 @@ func (f RedisProxy) ZRangeWithScores(ctx echo.Context, key string, start, stop i
 	return cmd
 }
 
-func (f RedisProxy) HIncrBy(ctx echo.Context, key, field string, incr int64) *redis.IntCmd {
-	span, _ := StartSpantoSkyWalkingForRedis(ctx, fmt.Sprintf("HIncrBy %s, field %s, incr %s ", key, field, strconv.FormatInt(incr, 10)), f.getRedisCache().String())
+func (f RedisProxy) HIncrBy(key, field string, incr int64) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HIncrBy %s, field %s, incr %s ", key, field, strconv.FormatInt(incr, 10)), f.getRedisCache().String())
 
 	cmd := f.getRedisCache().HIncrBy(key, field, incr)
 
@@ -289,15 +298,33 @@ func (f RedisProxy) HIncrBy(ctx echo.Context, key, field string, incr int64) *re
 	return cmd
 }
 
-func StartSpantoSkyWalkingForRedis(ctx echo.Context, queryStr string, db string) (go2sky.Span, error) {
+func (f RedisProxy) ZRangeByScore(key string, opt redis.ZRangeBy) *redis.StringSliceCmd {
+
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZRangeByScore %s ", key), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().ZRangeByScore(key, opt)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("ZRangeByScore %s", key),
+		err)
+	return cmd
+
+}
+
+func StartSpantoSkyWalkingForRedis(queryStr string, db string) (go2sky.Span, error) {
+	originCtx := GetContext()
+	if originCtx == nil {
+		return nil, errors.New("can not get Context")
+	}
+	ctx := originCtx.(echo.Context)
 	// op_name 是每一个操作的名称
 	tracerFromCtx := ctx.Get("tracer")
 	if tracerFromCtx == nil {
-		return nil,  errors.New("can not get tracer")
+		return nil, errors.New("can not get tracer")
 	}
 	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), queryStr, db, func(header string) error {
-		ctx.Request().Header.Set(propagation.Header, header)
+		ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
 		return nil
 	})
 	reqSpan.SetComponent(7)

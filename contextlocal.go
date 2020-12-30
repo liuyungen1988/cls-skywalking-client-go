@@ -1,18 +1,19 @@
 package cls_skywalking_client_go
 
 import (
-	"sync"
-
+	"github.com/labstack/echo/v4"
 	"github.com/petermattis/goid"
+	"sync"
+	"time"
 )
 
 var (
-	contexts = map[int64]interface{}{}
+	contexts = map[int64]echo.Context{}
 	rwm      sync.RWMutex
 )
 
 // Set 设置一个 context
-func SetContext(context interface{}) {
+func SetContext(context echo.Context) {
 	if context == nil {
 		return
 	}
@@ -20,11 +21,12 @@ func SetContext(context interface{}) {
 	rwm.Lock()
 	defer rwm.Unlock()
 
+	context.Set("time", time.Now())
 	contexts[goID] = context
 }
 
 // Get 返回设置的 context
-func GetContext() interface{} {
+func GetContext() echo.Context {
 	goID := getGoID()
 	rwm.RLock()
 	defer rwm.RUnlock()
@@ -44,3 +46,30 @@ func DeleteContext() {
 func getGoID() int64 {
 	return goid.Get()
 }
+
+func ClearContextAtRegularTime() {
+	t := time.NewTicker(120 * time.Second)
+	defer t.Stop()
+	for {
+		<-t.C
+		doClearContextAtRegularTime()
+		t.Reset(120 * time.Second)
+	}
+}
+
+func doClearContextAtRegularTime() {
+	rwm.Lock()
+	defer rwm.Unlock()
+	sm, _ := time.ParseDuration("-2m")
+	timeBefore := time.Now().Add(sm)
+
+	for k, v := range contexts {
+		contextTime := v.Get("time").(time.Time)
+		if contextTime.Unix() < timeBefore.Unix() {
+			delete(contexts, k)
+		}
+	}
+
+}
+
+

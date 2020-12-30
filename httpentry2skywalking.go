@@ -52,6 +52,7 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 	}
 
 	e.Use(LogToSkyWalking)
+	go ClearContextAtRegularTime()
 	return GRPCReporter
 }
 

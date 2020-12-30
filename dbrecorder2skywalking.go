@@ -36,11 +36,11 @@ func (f *RecordProxy) Load() error {
 }
 
 func (f *RecordProxy) LoadWhere(arg1 interface{}, arg2 ...interface{}) error {
-	return f.getRecorder().LoadWhere(arg1, arg2)
+	return f.getRecorder().LoadWhere(arg1, arg2...)
 }
 
 func (f *RecordProxy) ExistsWhere(arg1 interface{}, arg2 ...interface{}) (bool, error) {
-	return f.getRecorder().ExistsWhere(arg1, arg2)
+	return f.getRecorder().ExistsWhere(arg1, arg2...)
 }
 
 

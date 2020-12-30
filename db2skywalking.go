@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"errors"
+
 	"github.com/Masterminds/squirrel"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/SkyAPM/go2sky"
@@ -38,7 +39,7 @@ func (f DbProxy) getDb() sq.DBProxyBeginner {
 //}
 
 func (f DbProxy) Update(update sq.UpdateBuilder) (sql.Result, error) {
-	updateStr, args, _:=update.ToSql()
+	updateStr, args, _ := update.ToSql()
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(updateStr+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Update error: %v \n", spanErr)
@@ -56,7 +57,7 @@ func (f DbProxy) Update(update sq.UpdateBuilder) (sql.Result, error) {
 }
 
 func (f DbProxy) Delete(delete sq.DeleteBuilder) (sql.Result, error) {
-	deleteStr, args, _:=delete.ToSql()
+	deleteStr, args, _ := delete.ToSql()
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(deleteStr+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Delete error: %v \n", spanErr)
@@ -74,7 +75,7 @@ func (f DbProxy) Delete(delete sq.DeleteBuilder) (sql.Result, error) {
 }
 
 func (f DbProxy) Insert(insert sq.InsertBuilder) (sql.Result, error) {
-	insertStr, args, _:=insert.ToSql()
+	insertStr, args, _ := insert.ToSql()
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(insertStr+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Insert error: %v \n", spanErr)
@@ -91,15 +92,13 @@ func (f DbProxy) Insert(insert sq.InsertBuilder) (sql.Result, error) {
 	return result, err
 }
 
-
-
 func (f DbProxy) Exec(queryStr string, args ...interface{}) (sql.Result, error) {
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb exec error: %v \n", spanErr)
 	}
 
-	result, err := f.getDb().Exec(queryStr, args)
+	result, err := f.getDb().Exec(queryStr, args...)
 
 	if err != nil {
 		EndSpantoSkywalkingForDb(reqSpan, queryStr, false, err)
@@ -116,7 +115,7 @@ func (f DbProxy) QueryRowByStr(query string, args ...interface{}) squirrel.RowSc
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb error: %v \n", spanErr)
 	}
-	rowScanner :=  f.getDb().QueryRow(query, args)
+	rowScanner := f.getDb().QueryRow(query, args...)
 
 	EndSpantoSkywalkingForDb(reqSpan, query, true, nil)
 
@@ -144,13 +143,13 @@ func (f DbProxy) QueryRow(query squirrel.SelectBuilder) squirrel.RowScanner {
 	return rowScanner
 }
 
-func (f DbProxy)  QueryByStr(query string, args ...interface{}) (*sql.Rows, error) {
+func (f DbProxy) QueryByStr(query string, args ...interface{}) (*sql.Rows, error) {
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(fmt.Sprintf(query+"\r\n Parameters%+v: ", args), os.Getenv("DB_URL"))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb error: %v \n", spanErr)
 	}
 
-	rows, err := f.getDb().Query(query, args)
+	rows, err := f.getDb().Query(query, args...)
 
 	if err != nil {
 		EndSpantoSkywalkingForDb(reqSpan, query, false, err)
@@ -187,6 +186,7 @@ func (f DbProxy) Query(query squirrel.SelectBuilder) (*sql.Rows, error) {
 }
 
 func StartSpantoSkyWalkingForDb(queryStr string, db string) (go2sky.Span, error) {
+	db = GetDbUrl(db)
 	originCtx := GetContext()
 	if originCtx == nil {
 		return nil, errors.New("can not get context")
@@ -221,4 +221,13 @@ func EndSpantoSkywalkingForDb(reqSpan go2sky.Span, queryStr string, isNormal boo
 		reqSpan.Log(time.Now(), "[DB Response]", "结束请求")
 	}
 	reqSpan.End()
+}
+
+func GetDbUrl(dbUrl string) string {
+	if dbUrl != "" {
+		start := strings.Index(dbUrl, ":")
+		end := strings.Index(dbUrl, "(")
+		dbUrl = fmt.Sprintf(dbUrl[0:start]) + fmt.Sprintf(dbUrl[end:len(dbUrl)])
+	}
+	return dbUrl
 }

@@ -19,18 +19,7 @@ import (
 )
 
 var GRPCReporter go2sky.Reporter
-var TransHttpEntry *HttpEntry
-
-type HttpEntry struct {
-	ServiceName string
-}
-
-// “构造基类”
-func NewHttpEntry(serviceName string) *HttpEntry {
-	return &HttpEntry{
-		ServiceName: serviceName,
-	}
-}
+var GRPCTracer *go2sky.Tracer
 
 const componentIDGOHttpServer = 5005
 
@@ -44,11 +33,20 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 		log.Printf("new reporter error %v \n", err)
 	} else {
 		GRPCReporter = newReporter
-	}
 
-	initHttpEntry := NewHttpEntry(serviceName)
-	if initHttpEntry != nil {
-		TransHttpEntry = initHttpEntry
+		reporter := GRPCReporter
+		if reporter == nil {
+			return GRPCReporter
+		}
+
+		tracer, err := go2sky.NewTracer(serviceName, go2sky.WithReporter(reporter))
+		if err != nil {
+			log.Printf("create tracer error %v \n", err)
+		}
+
+		if tracer != nil {
+			GRPCTracer = tracer
+		}
 	}
 
 	e.Use(LogToSkyWalking)
@@ -58,23 +56,12 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 
 func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
-		reporter := GRPCReporter
-		if reporter == nil {
+		if GRPCTracer == nil {
+			log.Printf("tracer is nil")
 			err = next(c)
 			return
 		}
-
-		tracer, err := go2sky.NewTracer(TransHttpEntry.ServiceName, go2sky.WithReporter(reporter))
-		if err != nil {
-			log.Printf("create tracer error %v \n", err)
-		}
-
-		if tracer == nil {
-			err = next(c)
-			return
-		}
-
-		c.Set("tracer", tracer)
+		c.Set("tracer", GRPCTracer)
 		c.Set("header", newSafeHeader(c.Request().Header))
 		SetContext(c)
 		defer DeleteContext()
@@ -93,11 +80,13 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		span, ctx, err := tracer.CreateEntrySpan(c.Request().Context(),
+		span, ctx, err := GRPCTracer.CreateEntrySpan(c.Request().Context(),
 			getoperationName(c, requestParamMap, requestUrlArray),
 			func() (string, error) {
 				return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
 			})
+
+		requestParamMap = nil
 
 		if err != nil {
 			err = next(c)

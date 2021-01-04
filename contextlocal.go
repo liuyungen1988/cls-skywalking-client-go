@@ -1,10 +1,15 @@
 package cls_skywalking_client_go
 
 import (
-	"github.com/labstack/echo/v4"
+	"fmt"
 	"github.com/petermattis/goid"
+	"log"
+	"runtime"
+	"runtime/debug"
+	"strconv"
 	"sync"
 	"time"
+	"github.com/labstack/echo/v4"
 )
 
 var (
@@ -63,13 +68,38 @@ func doClearContextAtRegularTime() {
 	sm, _ := time.ParseDuration("-2m")
 	timeBefore := time.Now().Add(sm)
 
+	newContexts := map[int64]echo.Context{}
 	for k, v := range contexts {
 		contextTime := v.Get("time").(time.Time)
 		if contextTime.Unix() < timeBefore.Unix() {
 			delete(contexts, k)
+		} else {
+			newContexts[k] = v
 		}
 	}
 
+	contexts = nil
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	contexts = map[int64]echo.Context{}
+	for k, v := range newContexts {
+		contexts[k] = v
+	}
+
+	newContexts = nil
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	printMemStats()
+	log.Printf(fmt.Sprintf("contexts left: %s \n", strconv.Itoa(len(contexts))))
+
 }
 
+
+func printMemStats() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Printf("Alloc = %v TotalAlloc = %v Sys = %v NumGC = %v\n", m.Alloc/1024, m.TotalAlloc/1024, m.Sys/1024, m.NumGC)
+}
 

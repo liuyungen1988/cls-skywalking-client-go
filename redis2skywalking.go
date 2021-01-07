@@ -287,6 +287,17 @@ func (f RedisProxy) ZRangeWithScores(key string, start, stop int64) *redis.ZSlic
 	return cmd
 }
 
+func (f RedisProxy) IncrBy(key string, value int64) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("IncrBy %s, value %s ", key, strconv.FormatInt(value, 10)), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().IncrBy(key, value)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("IncrBy %s, value %s ", key, strconv.FormatInt(value, 10)),
+		err)
+	return cmd
+}
+
 func (f RedisProxy) HIncrBy(key, field string, incr int64) *redis.IntCmd {
 	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("HIncrBy %s, field %s, incr %s ", key, field, strconv.FormatInt(incr, 10)), f.getRedisCache().String())
 

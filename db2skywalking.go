@@ -38,6 +38,23 @@ func (f DbProxy) getDb() sq.DBProxyBeginner {
 //	result, err := f.getDb().Exec(insert)
 //}
 
+func (f DbProxy) Prepare(query string) (*sql.Stmt, error) {
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(query, os.Getenv("DB_URL"))
+	if spanErr != nil {
+		log.Printf("StartSpantoSkyWalkingForDb Prepare error: %v \n", spanErr)
+	}
+
+	result, err := f.getDb().Prepare(query)
+
+	if err != nil {
+		EndSpantoSkywalkingForDb(reqSpan, query, false, err)
+	} else {
+		EndSpantoSkywalkingForDb(reqSpan, query, true, nil)
+	}
+
+	return result, err
+}
+
 func (f DbProxy) Update(update sq.UpdateBuilder) (sql.Result, error) {
 	updateStr, args, _ := update.ToSql()
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(updateStr+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))

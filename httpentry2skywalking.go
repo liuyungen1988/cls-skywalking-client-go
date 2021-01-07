@@ -16,6 +16,7 @@ import (
 	"github.com/SkyAPM/go2sky/reporter"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo/v4"
+	"cls_skywalking_client_go/util"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -118,15 +119,14 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 		err = next(c)
 		return
-
 	}
 }
 
 func getoperationName(c echo.Context, requestParamMap map[string]string, requestUrlArray []string) string {
 	if requestParamMap["os"] == "" {
-		return fmt.Sprintf("%s%s", c.Request().Method, requestUrlArray[0])
+		return fmt.Sprintf("%s%s", c.Request().Method, util.ReplaceNumber(requestUrlArray[0]))
 	} else {
-		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, requestUrlArray[0])
+		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, util.ReplaceNumber(requestUrlArray[0]))
 	}
 }
 

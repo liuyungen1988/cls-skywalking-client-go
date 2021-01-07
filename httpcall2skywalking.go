@@ -3,6 +3,7 @@ package cls_skywalking_client_go
 import (
 	"net/http"
 	"time"
+	"cls_skywalking_client_go/util"
 
 	"errors"
 	"fmt"
@@ -30,7 +31,7 @@ func StartSpantoSkyWalking(url string, params []string, remoteService string) (g
 	})
 	reqSpan.SetComponent(2)                 //HttpClient,看 https://github.com/apache/skywalking/blob/master/docs/en/guides/Component-library-settings.md ， 目录在component-libraries.yml文件配置
 	reqSpan.SetSpanLayer(v3.SpanLayer_Http) // rpc 调用
-	reqSpan.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求服务:%s,请求地址:%s,请求参数:%+v", remoteService, url, params))
+	reqSpan.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求服务:%s,请求地址:%s,请求参数:%+v", remoteService, util.ReplaceAccessKeyId(url), params))
 
 	return reqSpan, err
 }

@@ -1,6 +1,7 @@
 package cls_skywalking_client_go
 
 import (
+	"github.com/Masterminds/squirrel"
 	"github.com/Masterminds/structable"
 )
 
@@ -13,6 +14,10 @@ func NewRecorderProxy(recorder structable.Recorder) *RecordProxy {
 	return &RecordProxy{
 		Recorder: recorder,
 	}
+}
+
+func (f RecordProxy) DB() squirrel.DBProxyBeginner {
+	return f.Recorder.DB()
 }
 
 func (f RecordProxy) getRecorder() structable.Recorder {
@@ -43,6 +48,17 @@ func (f *RecordProxy) ExistsWhere(arg1 interface{}, arg2 ...interface{}) (bool, 
 	return f.getRecorder().ExistsWhere(arg1, arg2...)
 }
 
+func (f *RecordProxy) Columns(boolean bool) []string {
+	return f.getRecorder().Columns(boolean)
+}
+
+func (f *RecordProxy) FieldReferences(boolean bool) []interface{} {
+	return f.getRecorder().FieldReferences(boolean)
+}
+
+func (f *RecordProxy) Exists() (bool, error) {
+	return f.getRecorder().Exists()
+}
 
 //func (f RecordProxy) Insert() (*sql.Rows, error) {
 //	queryStr, args, _ := query.ToSql()

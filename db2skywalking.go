@@ -19,17 +19,17 @@ import (
 )
 
 type DbProxy struct {
-	Db sq.DBProxyBeginner
+	Db sq.DBProxy
 }
 
 // “构造基类”
-func NewDbProxy(db sq.DBProxyBeginner) *DbProxy {
+func NewDbProxy(db sq.DBProxy) *DbProxy {
 	return &DbProxy{
 		Db: db,
 	}
 }
 
-func (f DbProxy) getDb() sq.DBProxyBeginner {
+func (f DbProxy) getDb() sq.DBProxy {
 	return f.Db
 }
 
@@ -126,6 +126,28 @@ func (f DbProxy) Exec(queryStr string, args ...interface{}) (sql.Result, error) 
 	return result, err
 }
 
+func (f DbProxy) ExecWith(s sq.Sqlizer) (sql.Result, error) {
+	query, args, err := s.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(query+fmt.Sprintf("\r\n Parameters: %+v", args), os.Getenv("DB_URL"))
+	if spanErr != nil {
+		log.Printf("StartSpantoSkyWalkingForDb exec error: %v \n", spanErr)
+	}
+
+	result, err := sq.ExecWith(f.getDb(), s)
+
+	if err != nil {
+		EndSpantoSkywalkingForDb(reqSpan, query, false, err)
+	} else {
+		EndSpantoSkywalkingForDb(reqSpan, query, true, nil)
+	}
+
+	return result, err
+}
+
 func (f DbProxy) QueryRowByStr(query string, args ...interface{}) squirrel.RowScanner {
 
 	reqSpan, spanErr := StartSpantoSkyWalkingForDb(fmt.Sprintf(query+"\r\n Parameters%+v: ", args), os.Getenv("DB_URL"))
@@ -206,13 +228,13 @@ func StartSpantoSkyWalkingForDb(queryStr string, db string) (go2sky.Span, error)
 	db = GetDbUrl(db)
 	originCtx := GetContext()
 	if originCtx == nil {
-		return nil, errors.New("can not get context")
+		return nil, errors.New(fmt.Sprintf("can not get context, queryStr %s", queryStr))
 	}
 	ctx := originCtx.(echo.Context)
 	// op_name 是每一个操作的名称
 	tracerFromCtx := ctx.Get("tracer")
 	if tracerFromCtx == nil {
-		return nil, errors.New("can not get tracer")
+		return nil, errors.New(fmt.Sprintf("can not get tracer, queryStr %s", queryStr))
 	}
 	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), queryStr, db, func(header string) error {

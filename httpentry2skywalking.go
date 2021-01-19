@@ -17,6 +17,7 @@ import (
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
 	"github.com/labstack/echo/v4"
 	"cls_skywalking_client_go/util"
+	"net/http"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -53,6 +54,53 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 	e.Use(LogToSkyWalking)
 	go ClearContextAtRegularTime()
 	return GRPCReporter
+}
+
+func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
+	if(GRPCTracer == nil) {
+		return nil
+	}
+	c := e.NewContext(nil, nil)
+	c.Set("tracer", GRPCTracer)
+	safeHeader := make(http.Header)
+	safeHeader.Set(propagation.Header, "")
+	c.Set("header", newSafeHeader(safeHeader))
+	SetContext(c)
+
+	request, err := http.NewRequest("GET", fmt.Sprintf("do_task_%s", taskName), strings.NewReader("暂无参数"))
+	if err != nil {
+		return nil
+	}
+
+	c.SetRequest(request)
+
+	span, ctx, err := GRPCTracer.CreateEntrySpan(c.Request().Context(),
+		fmt.Sprintf("do_task_%s", taskName),
+		func() (string, error) {
+			return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
+		})
+	if err != nil {
+		return nil
+	}
+
+	span.SetComponent(componentIDGOHttpServer)
+	span.Tag(go2sky.TagHTTPMethod, "GET")
+	span.Tag(go2sky.TagURL, taskName)
+	span.SetSpanLayer(v3.SpanLayer_Http)
+	c.SetRequest(c.Request().WithContext(ctx))
+
+	//span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s", "test",))
+	Log("[开始定时任务]" +  fmt.Sprintf("任务名称:%s,", taskName))
+
+	return span
+}
+
+func EndLogForCron(span go2sky.Span,  taskName, result string) {
+	if GRPCTracer == nil || span == nil {
+		return
+	}
+	Log("[结束定时任务]" +  fmt.Sprintf("任务名称:%s, 结果:", taskName, result))
+	span.End()
 }
 
 func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {

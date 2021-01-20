@@ -495,6 +495,9 @@ func StartSpantoSkyWalkingForRedis(queryStr string, db string) (go2sky.Span, err
 		ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
 		return nil
 	})
+	if(err != nil) {
+		return nil, errors.New(fmt.Sprintf("StartSpantoSkyWalkingForRedis CreateExitSpan error: %s", err))
+	}
 	reqSpan.SetComponent(7)
 	reqSpan.SetSpanLayer(v3.SpanLayer_Cache) // cache
 	reqSpan.Log(time.Now(), "[Redis Request]", fmt.Sprintf("开始请求,请求服务:%s,请求地址:%s", db, queryStr))

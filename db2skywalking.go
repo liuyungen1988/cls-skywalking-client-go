@@ -241,6 +241,11 @@ func StartSpantoSkyWalkingForDb(queryStr string, db string) (go2sky.Span, error)
 		ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
 		return nil
 	})
+
+	if(err != nil) {
+		return nil, errors.New(fmt.Sprintf("StartSpantoSkyWalkingForDb CreateExitSpan error: %s", err))
+	}
+
 	reqSpan.SetComponent(5)
 	reqSpan.SetSpanLayer(v3.SpanLayer_Database) // rpc 调用
 	reqSpan.Log(time.Now(), "[DBRequest]", fmt.Sprintf("开始请求,请求服务:%s,请求地址:%s", db, queryStr))

@@ -165,16 +165,20 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			requestParams, string(bodyBytes)))
 		//	span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求地址:%s,",  c.Request().RequestURI))
 
+		err = next(c)
+
 		defer func() {
 			code := c.Response().Status
 			if code >= 400 {
-				span.Error(time.Now(), "Error on handling request")
+				span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
 			}
+			if err != nil {
+				span.Error(time.Now(), fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err))
+			}
+
 			span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
 			span.End()
 		}()
-
-		err = next(c)
 		return
 	}
 }

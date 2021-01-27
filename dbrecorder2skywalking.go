@@ -4,7 +4,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/Masterminds/structable"
 	"fmt"
-	"os"
 	"log"
 )
 
@@ -29,7 +28,7 @@ func (f RecordProxy) getRecorder() structable.Recorder {
 
 func (f *RecordProxy) Insert() error {
 	queryStr := fmt.Sprintf("Insert table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb insert error: %v \n", spanErr)
 	}
@@ -46,7 +45,7 @@ func (f *RecordProxy) Insert() error {
 
 func (f *RecordProxy) Delete() error {
 	queryStr := fmt.Sprintf("Delete table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Delete error: %v \n", spanErr)
 	}
@@ -63,7 +62,7 @@ func (f *RecordProxy) Delete() error {
 
 func (f *RecordProxy) Update() error {
 	queryStr := fmt.Sprintf("Update table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Update error: %v \n", spanErr)
 	}
@@ -79,7 +78,7 @@ func (f *RecordProxy) Update() error {
 
 func (f *RecordProxy) Load() error {
 	queryStr := fmt.Sprintf("Load table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Load error: %v \n", spanErr)
 	}
@@ -96,7 +95,7 @@ func (f *RecordProxy) Load() error {
 
 func (f *RecordProxy) LoadWhere(arg1 interface{}, arg2 ...interface{}) error {
 	queryStr := fmt.Sprintf("LoadWhere table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb LoadWhere error: %v \n", spanErr)
 	}
@@ -113,7 +112,7 @@ func (f *RecordProxy) LoadWhere(arg1 interface{}, arg2 ...interface{}) error {
 
 func (f *RecordProxy) ExistsWhere(arg1 interface{}, arg2 ...interface{}) (bool, error) {
 	queryStr := fmt.Sprintf("ExistsWhere table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb ExistsWhere error: %v \n", spanErr)
 	}
@@ -138,7 +137,7 @@ func (f *RecordProxy) FieldReferences(boolean bool) []interface{} {
 
 func (f *RecordProxy) Exists() (bool, error) {
 	queryStr := fmt.Sprintf("Exists table %s, whereIds: %v", f.Recorder.TableName(), f.Recorder.WhereIds())
-	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, os.Getenv("DB_URL"))
+	reqSpan, spanErr := StartSpantoSkyWalkingForDb(queryStr, GetDsn(f.DB()))
 	if spanErr != nil {
 		log.Printf("StartSpantoSkyWalkingForDb Exists error: %v \n", spanErr)
 	}

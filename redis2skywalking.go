@@ -397,6 +397,96 @@ func (f RedisProxy) ZRem(key string, members ...interface{}) *redis.IntCmd {
 	return cmd
 }
 
+func (f RedisProxy)  ZRank(key, member string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZRank key: %s, member:%s", key, member), f.getRedisCache().String())
+
+	cmd:=  f.getRedisCache().ZRank(key, member)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("ZRank key: %s, member:%s", key, member),
+		err)
+	return cmd
+}
+
+func (f RedisProxy) Decr(key string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("Decr key: %s", key), f.getRedisCache().String())
+
+	cmd:=  f.getRedisCache().Decr(key)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("Decr key: %s", key),
+		err)
+	return cmd
+}
+
+func (f RedisProxy) ZRevRange(key string, start, stop int64) *redis.StringSliceCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZRevRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)), f.getRedisCache().String())
+
+	cmd:=  f.getRedisCache().ZRevRange(key, start, stop)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("ZRevRange %s, start %s, stop %s ", key, strconv.FormatInt(start, 10), strconv.FormatInt(stop, 10)),
+		err)
+	return cmd
+}
+
+func (f RedisProxy) ZCount(key, min, max string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("ZCount %s, min %s, max %s ", key, min, max), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().ZCount(key, min, max)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("ZCount %s, min %s, max %s ", key, min, max),
+	err)
+	return cmd
+}
+
+func (f RedisProxy) SAdd(key string, members ...interface{}) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("SAdd %s ", key), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().SAdd(key,  members...)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("SAdd %s ", key),
+		err)
+	return cmd
+}
+
+func (f RedisProxy) SRem(key string, members ...interface{}) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("SRem %s ", key), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().SRem(key,  members...)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("SRem %s ", key),
+		err)
+	return cmd
+}
+
+func (f RedisProxy)  LLen(key string) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("LLen %s ", key), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().LLen(key)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("LLen %s ", key),
+		err)
+	return cmd
+}
+
+func (f RedisProxy) LRem(key string, count int64, value interface{}) *redis.IntCmd {
+	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("LRem %s, count: %s, value: %S ", key, strconv.FormatInt(count, 10), value), f.getRedisCache().String())
+
+	cmd := f.getRedisCache().LRem(key, count, value)
+
+	_, err := cmd.Result()
+	defer processResult(span, fmt.Sprintf("LRem %s, count: %s, value: %S ", key, strconv.FormatInt(count, 10), value),
+		err)
+	return cmd
+}
+
+
+
 func (f RedisProxy) TTL(key string) *redis.DurationCmd {
 	span, _ := StartSpantoSkyWalkingForRedis(fmt.Sprintf("TTL key: %s", key), f.getRedisCache().String())
 

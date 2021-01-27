@@ -11,13 +11,13 @@ import (
 	"bytes"
 	"io/ioutil"
 
+	"cls_skywalking_client_go/util"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	"github.com/SkyAPM/go2sky/reporter"
 	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
-	"github.com/labstack/echo/v4"
-	"cls_skywalking_client_go/util"
 	"net/http"
+	"github.com/labstack/echo/v4"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -30,7 +30,8 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 	if(useSkywalking !="true") {
 		return nil
 	}
-	newReporter, err := reporter.NewGRPCReporter("skywalking-oap:11800")
+
+	newReporter, err := getReporter(os.Getenv("USE_SKYWALKING_DEBUG"))
 	if err != nil {
 		log.Printf("new reporter error %v \n", err)
 	} else {
@@ -54,6 +55,14 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 	e.Use(LogToSkyWalking)
 	go ClearContextAtRegularTime()
 	return GRPCReporter
+}
+
+func getReporter(isDebug string) (go2sky.Reporter, error) {
+	if isDebug == "true" {
+		return reporter.NewGRPCReporter("127.0.0.1:8050")
+	} else {
+		return reporter.NewGRPCReporter("skywalking-oap:11800")
+	}
 }
 
 func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {

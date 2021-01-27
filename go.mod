@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/structable v0.0.0-20170407152004-a1a302ef78ec
 	github.com/SkyAPM/go2sky v0.6.2
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/labstack/echo/v4 v4.1.16
+	github.com/labstack/echo/v4 v4.1.6
 	github.com/mattn/go-sqlite3 v1.14.6 // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5

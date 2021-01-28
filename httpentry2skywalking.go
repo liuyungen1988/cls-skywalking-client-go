@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"cls_skywalking_client_go/util"
+	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"github.com/SkyAPM/go2sky"
 	"github.com/SkyAPM/go2sky/propagation"
 	"github.com/SkyAPM/go2sky/reporter"

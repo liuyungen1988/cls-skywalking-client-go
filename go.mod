@@ -1,4 +1,4 @@
-module cls_skywalking_client_go
+module codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git
 
 go 1.11
 

@@ -1,5 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.3/go.mod h1:UIYJOZo6yL8pIBT7UnHuAXTiDcmIDsSU3aJVlKVu26Q=
+codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.4 h1:Z5ywu5lsNOdBn2lCABnavd0CtHU7vIfDJS7g8udKFRE=
+codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.4/go.mod h1:UIYJOZo6yL8pIBT7UnHuAXTiDcmIDsSU3aJVlKVu26Q=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/squirrel v1.5.0 h1:JukIZisrUXadA9pl3rMkjhiamxiB0cXiu+HGp/Y8cY8=
 github.com/Masterminds/squirrel v1.5.0/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=

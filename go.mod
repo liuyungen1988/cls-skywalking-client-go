@@ -3,7 +3,7 @@ module codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client
 go 1.11
 
 require (
-	codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.3
+	codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.3 // indirect
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/Masterminds/structable v0.0.0-20170407152004-a1a302ef78ec
 	github.com/SkyAPM/go2sky v0.6.0

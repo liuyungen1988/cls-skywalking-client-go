@@ -144,8 +144,6 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
 			})
 
-		requestParamMap = nil
-
 		if err != nil {
 			err = next(c)
 			return
@@ -164,6 +162,18 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s,请求参数:%+v, \r\n payload  : %s", c.Request().RemoteAddr,
 			requestParams, string(bodyBytes)))
 		//	span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求地址:%s,",  c.Request().RequestURI))
+
+		if len(requestParamMap["sv"]) != 0 {
+			searchableKeys := fmt.Sprintf("sv=%s", requestParamMap["sv"])
+			LogWithSearch(searchableKeys, "Input sv search")
+		}
+
+		if len(requestParamMap["app"]) != 0 {
+			searchableKeys := fmt.Sprintf("app=%s", requestParamMap["app"])
+			LogWithSearch(searchableKeys, "Input app search")
+		}
+
+		requestParamMap = nil
 
 		err = next(c)
 

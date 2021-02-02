@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"errors"
-	"github.com/SkyAPM/go2sky"
-	"github.com/SkyAPM/go2sky/propagation"
-	v3 "github.com/SkyAPM/go2sky/reporter/grpc/language-agent"
+	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
+	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
+	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
 	"strconv"
 	"gopkg.in/redis.v5"
 	"github.com/labstack/echo/v4"

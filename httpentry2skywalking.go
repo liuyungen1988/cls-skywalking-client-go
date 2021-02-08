@@ -12,11 +12,12 @@ import (
 	"io/ioutil"
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter"
 	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
 	"net/http"
+
+	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"github.com/labstack/echo/v4"
 )
 
@@ -42,7 +43,13 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 			return GRPCReporter
 		}
 
-		tracer, err := go2sky.NewTracer(serviceName, go2sky.WithReporter(reporter))
+		sample := 1.0
+		sampleStr := os.Getenv("USE_SKYWALKING_SAMPLE")
+		if len(sampleStr) != 0 {
+			sample, _ = strconv.ParseFloat(sampleStr, 64)
+		}
+
+		tracer, err := go2sky.NewTracer(serviceName, go2sky.WithReporter(reporter), go2sky.WithSampler(sample))
 		if err != nil {
 			log.Printf("create tracer error %v \n", err)
 		}

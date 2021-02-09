@@ -70,11 +70,17 @@ func doClearContextAtRegularTime() {
 
 	newContexts := map[int64]echo.Context{}
 	for k, v := range contexts {
-		contextTime := v.Get("time").(time.Time)
-		if contextTime.Unix() < timeBefore.Unix() {
-			delete(contexts, k)
+		vTime := v.Get("time")
+		if vTime != nil {
+			contextTime := vTime.(time.Time)
+			if contextTime.Unix() < timeBefore.Unix() {
+				delete(contexts, k)
+			} else {
+				newContexts[k] = v
+			}
+
 		} else {
-			newContexts[k] = v
+			delete(contexts, k)
 		}
 	}
 
@@ -93,7 +99,6 @@ func doClearContextAtRegularTime() {
 
 	printMemStats()
 	log.Printf(fmt.Sprintf("contexts left: %s \n", strconv.Itoa(len(contexts))))
-
 }
 
 

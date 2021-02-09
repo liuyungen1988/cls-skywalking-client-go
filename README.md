@@ -12,4 +12,7 @@ release/v0.1.3
     
  release/v0.1.6
     增加采样率： USE_SKYWALKING_SAMPLE 可设置0.0~1.0
+    
+ release/v0.1.7  
+    解决执行doClearContextAtRegularTime()时报错：panic: interface conversion: interface {} is nil, not time.Time
 

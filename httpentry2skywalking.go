@@ -27,12 +27,12 @@ var GRPCTracer *go2sky.Tracer
 const componentIDGOHttpServer = 5005
 
 func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
-	useSkywalking :=os.Getenv("USE_SKYWALKING")
-	if(useSkywalking !="true") {
+	useSkywalking := os.Getenv("USE_SKYWALKING")
+	if useSkywalking != "true" {
 		return nil
 	}
 
-	newReporter, err := getReporter(os.Getenv("USE_SKYWALKING_DEBUG"))
+	newReporter, err := getReporter(os.Getenv("USE_SKYWALKING_DEBUG"), os.Getenv("SKYWALKING_OAP_IP"))
 	if err != nil {
 		log.Printf("new reporter error %v \n", err)
 	} else {
@@ -64,7 +64,11 @@ func UseSkyWalking(e *echo.Echo, serviceName string) go2sky.Reporter {
 	return GRPCReporter
 }
 
-func getReporter(isDebug string) (go2sky.Reporter, error) {
+func getReporter(isDebug string, skywalkingOapIp string) (go2sky.Reporter, error) {
+	if len(skywalkingOapIp) != 0 {
+		return reporter.NewGRPCReporter(skywalkingOapIp)
+	}
+
 	if isDebug == "true" {
 		return reporter.NewGRPCReporter("127.0.0.1:8050")
 	} else {
@@ -73,7 +77,7 @@ func getReporter(isDebug string) (go2sky.Reporter, error) {
 }
 
 func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
-	if(GRPCTracer == nil) {
+	if GRPCTracer == nil {
 		return nil
 	}
 	c := e.NewContext(nil, nil)
@@ -97,7 +101,7 @@ func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
 			if c.Get("header") != nil {
 				value = c.Get("header").(*SafeHeader).Get(propagation.Header)
 			}
-			return value,nil
+			return value, nil
 		})
 	if err != nil {
 		return nil
@@ -110,16 +114,16 @@ func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
 	c.SetRequest(c.Request().WithContext(ctx))
 
 	//span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("请求来源:%s", "test",))
-	Log("[开始定时任务]" +  fmt.Sprintf("任务名称:%s,", taskName))
+	Log("[开始定时任务]" + fmt.Sprintf("任务名称:%s,", taskName))
 
 	return span
 }
 
-func EndLogForCron(span go2sky.Span,  taskName, result string) {
+func EndLogForCron(span go2sky.Span, taskName, result string) {
 	if GRPCTracer == nil || span == nil {
 		return
 	}
-	Log("[结束定时任务]" +  fmt.Sprintf("任务名称:%s, 结果:", taskName, result))
+	Log("[结束定时任务]" + fmt.Sprintf("任务名称:%s, 结果:", taskName, result))
 	span.End()
 }
 

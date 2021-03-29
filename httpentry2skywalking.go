@@ -93,7 +93,10 @@ func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
 	span, ctx, err := GRPCTracer.CreateEntrySpan(c.Request().Context(),
 		fmt.Sprintf("do_task_%s", taskName),
 		func() (string, error) {
-			return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
+			if c.Get("header") != nil {
+				c.Get("header").(*SafeHeader).Get(propagation.Header)
+			}
+			return nil
 		})
 	if err != nil {
 		return nil
@@ -148,7 +151,10 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		span, ctx, err := GRPCTracer.CreateEntrySpan(c.Request().Context(),
 			getoperationName(c, requestParamMap, requestUrlArray),
 			func() (string, error) {
-				return c.Get("header").(*SafeHeader).Get(propagation.Header), nil
+				if c.Get("header") != nil {
+					c.Get("header").(*SafeHeader).Get(propagation.Header)
+				}
+				return nil
 			})
 
 		if err != nil {

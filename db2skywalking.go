@@ -255,7 +255,9 @@ func StartSpantoSkyWalkingForDb(queryStr string, db string) (go2sky.Span, error)
 	}
 	tracer := tracerFromCtx.(*go2sky.Tracer)
 	reqSpan, err := tracer.CreateExitSpan(ctx.Request().Context(), queryStr, db, func(header string) error {
-		ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
+		if ctx.Get("header") != nil {
+			ctx.Get("header").(*SafeHeader).Set(propagation.Header, header)
+		}
 		return nil
 	})
 

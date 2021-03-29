@@ -4,6 +4,8 @@ codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.4 h1:Z5ywu5l
 codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.4/go.mod h1:UIYJOZo6yL8pIBT7UnHuAXTiDcmIDsSU3aJVlKVu26Q=
 codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.5-0.20210325080134-90e1fc19c6cf h1:RmivOd/Rd2GmNSbNlJVjMyGUkhLcWpUs/5j43bQWCIs=
 codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.5-0.20210325080134-90e1fc19c6cf/go.mod h1:UIYJOZo6yL8pIBT7UnHuAXTiDcmIDsSU3aJVlKVu26Q=
+codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.5-0.20210329064718-52ed6b2d7775 h1:hNgnM/WkagRk/A14Ut790vUoEdiy+uTh3Fr7o6jeePQ=
+codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git v0.6.5-0.20210329064718-52ed6b2d7775/go.mod h1:UIYJOZo6yL8pIBT7UnHuAXTiDcmIDsSU3aJVlKVu26Q=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/squirrel v1.5.0 h1:JukIZisrUXadA9pl3rMkjhiamxiB0cXiu+HGp/Y8cY8=
 github.com/Masterminds/squirrel v1.5.0/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=

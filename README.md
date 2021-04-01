@@ -15,4 +15,8 @@ release/v0.1.3
     
  release/v0.1.7  
     解决执行doClearContextAtRegularTime()时报错：panic: interface conversion: interface {} is nil, not time.Time
-
+    
+release/v0.1.8  
+    1. echo的context运行一段时间后会reset, 导致获取其中的一些值为空， 原因未知。 暂时用判空方式解决。 
+    2. 增加grpc的超时时间设置。
+    

@@ -241,7 +241,7 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 	var log bytes.Buffer
 	rsp := io.MultiWriter(w, &log)
 	if rsp != nil {
-		respBodyStr := fmt.Sprintf("响应： %#v", log)
+		respBodyStr := fmt.Sprintf("响应： %#v", resp)
 
 		//data.Errno = 501
 		span.Log(time.Now(), respBodyStr)

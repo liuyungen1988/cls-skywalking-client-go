@@ -10,12 +10,15 @@ import (
 
 	"bytes"
 	"io/ioutil"
+	"net/http"
+    "reflect"
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter"
 	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
-	"net/http"
+
+
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"github.com/labstack/echo/v4"
@@ -123,7 +126,7 @@ func EndLogForCron(span go2sky.Span, taskName, result string) {
 	if GRPCTracer == nil || span == nil {
 		return
 	}
-	Log("[结束定时任务]" + fmt.Sprintf("任务名称:%s, 结果:", taskName, result))
+	Log("[结束定时任务]" + fmt.Sprintf("任务名称:%s, 结果:%s", taskName, result))
 	span.End()
 }
 
@@ -182,15 +185,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			requestParams, string(bodyBytes)))
 		//	span.Log(time.Now(), "[HttpRequest]", fmt.Sprintf("开始请求,请求地址:%s,",  c.Request().RequestURI))
 
-		if len(requestParamMap["sv"]) != 0 {
-			searchableKeys := fmt.Sprintf("sv=%s", requestParamMap["sv"])
-			LogWithSearch(searchableKeys, "Input sv search")
-		}
-
-		if len(requestParamMap["app"]) != 0 {
-			searchableKeys := fmt.Sprintf("app=%s", requestParamMap["app"])
-			LogWithSearch(searchableKeys, "Input app search")
-		}
+		logWithSearchUseRequestParamMap(requestParamMap)
 
 		requestParamMap = nil
 
@@ -202,7 +197,18 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
 			}
 			if err != nil {
-				span.Error(time.Now(), fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err))
+				errorStr := fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err)
+				needFilter := filter(errorStr)
+				if !needFilter {
+					span.Error(time.Now(), )
+				}
+			}
+
+			if c.Response().Size <= 1000 {
+				//200 响应中notFountCode := "Code:404"
+				//errno 不为空
+				//if()
+				logResponse(span, c.Response())
 			}
 
 			span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
@@ -210,6 +216,61 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		}()
 		return
 	}
+}
+
+func filter(str string) bool {
+	var list = []string{"code:\"20101\"", "code:\"10212\"", "无审核权限",
+		"验证码错误",
+		"请登录",
+		"该文章正在被审核",
+		"非草稿箱内容或者不存在",
+		"视频还未处于可正常播放状态",
+		"板块不能为空",
+		"正在编辑中"}
+	for ingorestrIndex := range list {
+
+		if strings.Contains(str, list[ingorestrIndex]) {
+			return true
+		}
+	}
+	return false;
+}
+
+func logResponse(span go2sky.Span, resp *echo.Response) {
+	w := resp.Writer
+	body, error:= fmt.Println(string(reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()))
+	if error != nil {
+		respBodyStr := fmt.Sprintf("响应： %#v", body)
+
+		//data.Errno = 501
+		span.Log(time.Now(), respBodyStr)
+	}
+}
+
+func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
+	searchableKeys := ""
+	if len(requestParamMap["sv"]) != 0 {
+		searchableKeys += fmt.Sprintf("sv=%s", requestParamMap["sv"])
+	}
+
+	if len(requestParamMap["app"]) != 0 {
+		if(len(searchableKeys) != 0) {
+			searchableKeys += ","
+		}
+	  searchableKeys += fmt.Sprintf("app=%s", requestParamMap["app"])
+	}
+
+	if len(requestParamMap["cuid"]) != 0 {
+		if(len(searchableKeys) != 0) {
+			searchableKeys += ","
+		}
+	  searchableKeys += fmt.Sprintf("cuid=%s", requestParamMap["cuid"])
+	}
+    if len(searchableKeys) != 0 {
+		LogWithSearch(searchableKeys, "Input search")
+	}
+
+	return searchableKeys
 }
 
 func getoperationName(c echo.Context, requestParamMap map[string]string, requestUrlArray []string) string {

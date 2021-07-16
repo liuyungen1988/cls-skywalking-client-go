@@ -20,3 +20,8 @@ release/v0.1.8
     1. echo的context运行一段时间后会reset, 导致获取其中的一些值为空， 原因未知。 暂时用判空方式解决。 
     2. 增加grpc的超时时间设置。
     
+release/v0.1.9
+    1. 根据设备号需要能获取tracing IOS cuid 解决， Android后续解决。
+    2. 响应小于xxx打印响应。
+    3. 修改判断错误的条件。
+    

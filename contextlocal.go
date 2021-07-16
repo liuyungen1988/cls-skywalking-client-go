@@ -70,6 +70,10 @@ func doClearContextAtRegularTime() {
 
 	newContexts := map[int64]echo.Context{}
 	for k, v := range contexts {
+		if v == nil {
+			delete(contexts, k)
+			continue
+		}
 		vTime := v.Get("time")
 		if vTime != nil {
 			contextTime := vTime.(time.Time)

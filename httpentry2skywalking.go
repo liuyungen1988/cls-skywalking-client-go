@@ -239,7 +239,7 @@ func filter(str string) bool {
 func logResponse(span go2sky.Span, resp *echo.Response) {
 	w := resp.Writer
 	body, error:= fmt.Println(string(reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()))
-	if error != nil {
+	if error == nil {
 		respBodyStr := fmt.Sprintf("响应： %#v", body)
 
 		//data.Errno = 501

@@ -241,7 +241,7 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 
 	var bytes []byte
 	//支持GZIP
-	t := reflect.TypeOf(w.Header()).Name()
+	t := reflect.TypeOf(w.Header()).String()
 	if   t == "gzip.Header" {
 		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	} else {

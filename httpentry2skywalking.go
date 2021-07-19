@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"io"
 
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
@@ -238,14 +238,11 @@ func filter(str string) bool {
 
 func logResponse(span go2sky.Span, resp *echo.Response) {
 	w := resp.Writer
-	var log bytes.Buffer
-	rsp := io.MultiWriter(w, &log)
-	if rsp != nil {
-		respBodyStr := fmt.Sprintf("响应： %#v", rsp)
+
+	respBodyStr := string(reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()[:])
 
 		//data.Errno = 501
 		span.Log(time.Now(), respBodyStr)
-	}
 }
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {

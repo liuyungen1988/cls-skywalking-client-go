@@ -18,8 +18,6 @@ import (
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter"
 	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
 
-
-
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"github.com/labstack/echo/v4"
 )
@@ -166,7 +164,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				return value, nil
 			})
 
-		if err	!= nil {
+		if err != nil {
 			err = next(c)
 			return
 		}
@@ -199,8 +197,10 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			if err != nil {
 				errorStr := fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err)
 				needFilter := filter(errorStr)
-				if !needFilter {
-					span.Error(time.Now(), )
+				if needFilter {
+					span.Log(time.Now(), errorStr)
+				} else {
+					span.Error(time.Now(), errorStr)
 				}
 			}
 
@@ -233,21 +233,26 @@ func filter(str string) bool {
 			return true
 		}
 	}
-	return false;
+	return false
 }
 
 func logResponse(span go2sky.Span, resp *echo.Response) {
 	w := resp.Writer
 
-    bytes := reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
-	//respBodyStr, _ := fmt.Println(bytes)
+	var bytes []byte
+	//支持GZIP
+	t := reflect.TypeOf(w.Header()).Name()
+	if   t == "gzip.Header" {
+		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+	} else {
+		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+	}
 
-	fmt.Println(bytes)
 	str2 := string(bytes[:])
 	fmt.Println(str2)
 
-		//data.Errno = 501
-	span.Log(time.Now(), str2 )
+	//data.Errno = 501
+	span.Log(time.Now(), str2)
 }
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
@@ -257,19 +262,19 @@ func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 	}
 
 	if len(requestParamMap["app"]) != 0 {
-		if(len(searchableKeys) != 0) {
+		if len(searchableKeys) != 0 {
 			searchableKeys += ","
 		}
-	  searchableKeys += fmt.Sprintf("app=%s", requestParamMap["app"])
+		searchableKeys += fmt.Sprintf("app=%s", requestParamMap["app"])
 	}
 
 	if len(requestParamMap["cuid"]) != 0 {
-		if(len(searchableKeys) != 0) {
+		if len(searchableKeys) != 0 {
 			searchableKeys += ","
 		}
-	  searchableKeys += fmt.Sprintf("cuid=%s", requestParamMap["cuid"])
+		searchableKeys += fmt.Sprintf("cuid=%s", requestParamMap["cuid"])
 	}
-    if len(searchableKeys) != 0 {
+	if len(searchableKeys) != 0 {
 		LogWithSearch(searchableKeys, "Input search")
 	}
 

@@ -166,7 +166,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				return value, nil
 			})
 
-		if err != nil {
+		if err	!= nil {
 			err = next(c)
 			return
 		}
@@ -239,10 +239,15 @@ func filter(str string) bool {
 func logResponse(span go2sky.Span, resp *echo.Response) {
 	w := resp.Writer
 
-	respBodyStr := string(reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()[:])
+    bytes := reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+	//respBodyStr, _ := fmt.Println(bytes)
+
+	fmt.Println(bytes)
+	str2 := string(bytes[:])
+	fmt.Println(str2)
 
 		//data.Errno = 501
-		span.Log(time.Now(), respBodyStr)
+	span.Log(time.Now(), str2 )
 }
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {

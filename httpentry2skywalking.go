@@ -241,8 +241,8 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 
 	var bytes []byte
 	//支持GZIP
-	t := reflect.TypeOf(w.Header()).PkgPath()
-	if   t == "gzip.Header" {
+	t := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("compressor"))
+	if !isBlank(t) {
 		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	} else {
 		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
@@ -254,6 +254,25 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 	//data.Errno = 501
 	span.Log(time.Now(), str2)
 }
+
+func isBlank(value reflect.Value) bool {
+	switch value.Kind() {
+	case reflect.String:
+		return value.Len() == 0
+	case reflect.Bool:
+		return !value.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return value.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return value.IsNil()
+	}
+	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
+}
+
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 	searchableKeys := ""

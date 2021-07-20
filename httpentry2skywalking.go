@@ -2,16 +2,17 @@ package cls_skywalking_client_go
 
 import (
 	"fmt"
+
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
 	"bytes"
 	"io/ioutil"
 	"net/http"
 	"reflect"
+
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
@@ -208,6 +209,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				//200 响应中notFountCode := "Code:404"
 				//errno 不为空
 				//if()
+
 				logResponse(span, c.Response())
 			}
 
@@ -236,15 +238,20 @@ func filter(str string) bool {
 	return false
 }
 
-func logResponse(span go2sky.Span, resp *echo.Response) {
-	w := resp.Writer
+func logResponse(span go2sky.Span, res *echo.Response) {
+	NewW := res.Writer
 
 	var bytes []byte
 	//支持GZIP
-	if isZip(w) {
-		bytes = reflect.ValueOf(w).Elem().FieldByName("ResponseWriter").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+	if isZip(NewW) {
+		responseWriter := reflect.ValueOf(reflect.ValueOf(NewW).Elem().FieldByName("ResponseWriter"))
+		wOfReflect := reflect.ValueOf(responseWriter.FieldByName("w"))
+		buf := reflect.ValueOf(wOfReflect.FieldByName("buf"))
+		if !isBlank(buf) {
+			bytes = buf.Bytes()
+		}
 	} else {
-		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+		bytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
 
 	str2 := string(bytes[:])
@@ -254,12 +261,15 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 	span.Log(time.Now(), str2)
 }
 
+
+
 func isZip(w http.ResponseWriter) bool {
+
 	t := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("Writer"))
 	if isBlank(t) {
 		return false
 	}
-	m := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("Writer")).Elem().FieldByName("compressor")
+	m := reflect.ValueOf(t.FieldByName("compressor"))
 	if isBlank(m) {
 		return false
 	}
@@ -283,7 +293,6 @@ func isBlank(value reflect.Value) bool {
 	}
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
-
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 	searchableKeys := ""

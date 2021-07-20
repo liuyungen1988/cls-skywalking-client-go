@@ -242,7 +242,7 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 	var bytes []byte
 	//支持GZIP
 	if isZip(w) {
-		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+		bytes = reflect.ValueOf(w).Elem().FieldByName("ResponseWriter").Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	} else {
 		bytes = reflect.ValueOf(w).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
@@ -255,11 +255,11 @@ func logResponse(span go2sky.Span, resp *echo.Response) {
 }
 
 func isZip(w http.ResponseWriter) bool {
-	t := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("writer"))
+	t := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("Writer"))
 	if isBlank(t) {
 		return false
 	}
-	t = reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("writer").Elem().FieldByName("compressor"))
+	t = reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("Writer").Elem().FieldByName("compressor"))
 	if isBlank(t) {
 		return false
 	}

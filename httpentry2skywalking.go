@@ -259,8 +259,8 @@ func isZip(w http.ResponseWriter) bool {
 	if isBlank(t) {
 		return false
 	}
-	t = reflect.ValueOf(w).Elem().FieldByName("Writer").Elem().FieldByName("compressor")
-	if isBlank(t) {
+	m := reflect.ValueOf(reflect.ValueOf(w).Elem().FieldByName("Writer")).Elem().FieldByName("compressor")
+	if isBlank(m) {
 		return false
 	}
 	return true

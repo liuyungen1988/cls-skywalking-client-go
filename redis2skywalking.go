@@ -45,6 +45,13 @@ func (f RedisProxy) Get(key string) *redis.StringCmd {
 	cmd := f.getRedisCache().Get(key)
 
 	_, err := cmd.Result()
+
+	if(err != nil) {
+	   errStr := fmt.Sprintf("%s", err)
+	   if(errStr == "redis: nil"){
+	   	  err = nil
+	   }
+	}
 	defer processResult(span, "Get "+key,
 		err)
 	return cmd

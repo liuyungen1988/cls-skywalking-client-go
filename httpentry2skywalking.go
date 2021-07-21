@@ -227,6 +227,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 func filter(str string) bool {
 	var list = []string{"code:\"20101\"", "code:\"10212\"", "无审核权限",
+		"code:\"132\"",  /**用户不存在**/
 		"验证码错误",
 		"请登录",
 		"该文章正在被审核",

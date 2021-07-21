@@ -3,16 +3,21 @@ package cls_skywalking_client_go
 import (
 	"fmt"
 
+	"bytes"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
-	"bytes"
-	"io/ioutil"
-	"net/http"
-	"reflect"
 
+	"io"
+	"net"
+
+	"bufio"
+	"compress/gzip"
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
@@ -210,7 +215,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				//errno 不为空
 				//if()
 
-				logResponse(span, c.Response())
+				logResponse(span, c.Response(), c)
 			}
 
 			span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
@@ -238,30 +243,57 @@ func filter(str string) bool {
 	return false
 }
 
-func logResponse(span go2sky.Span, res *echo.Response) {
+func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
+
+	//var str string = "test"
+	//
+	//var data []byte = []byte(str)
+	//
+	//rw := res.Writer
+	//w, err := gzip.NewWriterLevel(rw, 9)
+	//w.Write(data)
+	//if err != nil {
+	//
+	//}
+	//defer func() {
+	//	if res.Size == 0 {
+	//		// We have to reset response to it's pristine state when
+	//		// nothing is written to body or error is returned.
+	//		// See issue #424, #407.
+	//		//res.Writer = rw
+	//		//w.Reset(ioutil.Discard)
+	//	}
+	//	w.Close()
+	//}()
+	//grw := &gzipResponseWriter{Writer: w, ResponseWriter: rw}
+	//res.Writer = grw
+
 	NewW := res.Writer
 
-	var bytes []byte
+	var readBytes []byte
 	//支持GZIP
 	if isZip(NewW) {
-		responseWriter := reflect.ValueOf(reflect.ValueOf(NewW).Elem().FieldByName("ResponseWriter"))
-		wOfReflect := reflect.ValueOf(responseWriter.FieldByName("w"))
-		buf := reflect.ValueOf(wOfReflect.FieldByName("buf"))
-		if !isBlank(buf) {
-			bytes = buf.Bytes()
-		}
+		responseWriter := reflect.Indirect(reflect.ValueOf(NewW).Elem().FieldByName("ResponseWriter").Elem()).FieldByName("w")
+		buffioWriter := reflect.Indirect(responseWriter)
+		readBytes = reflect.Indirect(buffioWriter.FieldByName("buf")).Bytes()
 	} else {
-		bytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
+		readBytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
 
-	str2 := string(bytes[:])
+	buf := bytes.NewBuffer(readBytes)
+	r, _ := gzip.NewReader(buf)
+	defer r.Close()
+	undatas, _ := ioutil.ReadAll(r)
+	fmt.Println("ungzip size:", len(undatas))
+	str3 := string(undatas[:])
+	fmt.Println(str3)
+
+	str2 := string(readBytes[:])
 	fmt.Println(str2)
 
 	//data.Errno = 501
 	span.Log(time.Now(), str2)
 }
-
-
 
 func isZip(w http.ResponseWriter) bool {
 
@@ -269,11 +301,15 @@ func isZip(w http.ResponseWriter) bool {
 	if isBlank(t) {
 		return false
 	}
-	m := reflect.ValueOf(t.FieldByName("compressor"))
-	if isBlank(m) {
-		return false
+	m := reflect.ValueOf(w).Elem().FieldByName("Writer").Interface().(*gzip.Writer)
+    typeOfHeader := reflect.TypeOf(m.Header)
+	typeOfHeaderStr := typeOfHeader.PkgPath() + "." +  typeOfHeader.Name()
+
+	if(typeOfHeaderStr == "compress/gzip.Header") {
+        return true
 	}
-	return true
+
+	return false
 }
 
 func isBlank(value reflect.Value) bool {
@@ -292,6 +328,48 @@ func isBlank(value reflect.Value) bool {
 		return value.IsNil()
 	}
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
+}
+
+type (
+	// GzipConfig defines the config for Gzip middleware.
+	GzipConfig struct {
+		// Skipper defines a function to skip middleware.
+
+		// Gzip compression level.
+		// Optional. Default value -1.
+		Level int `yaml:"level"`
+	}
+
+	gzipResponseWriter struct {
+		io.Writer
+		http.ResponseWriter
+	}
+)
+
+func (w *gzipResponseWriter) WriteHeader(code int) {
+	if code == http.StatusNoContent { // Issue #489
+		w.ResponseWriter.Header().Del(echo.HeaderContentEncoding)
+	}
+	w.Header().Del(echo.HeaderContentLength) // Issue #444
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	if w.Header().Get(echo.HeaderContentType) == "" {
+		w.Header().Set(echo.HeaderContentType, http.DetectContentType(b))
+	}
+	return w.Writer.Write(b)
+}
+
+func (w *gzipResponseWriter) Flush() {
+	w.Writer.(*gzip.Writer).Flush()
+	if flusher, ok := w.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (w *gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return w.ResponseWriter.(http.Hijacker).Hijack()
 }
 
 func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {

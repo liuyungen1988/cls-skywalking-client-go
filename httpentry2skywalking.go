@@ -272,7 +272,8 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 
 	var readBytes []byte
 	//支持GZIP
-	if isZip(NewW) {
+	isZip := isZip(NewW)
+	if  isZip {
 		responseWriter := reflect.Indirect(reflect.ValueOf(NewW).Elem().FieldByName("ResponseWriter").Elem()).FieldByName("w")
 		buffioWriter := reflect.Indirect(responseWriter)
 		readBytes = reflect.Indirect(buffioWriter.FieldByName("buf")).Bytes()
@@ -280,21 +281,22 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		readBytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
 
-	buf := bytes.NewBuffer(readBytes)
-	r, _ := gzip.NewReader(buf)
-	if(r != nil) {
-		defer r.Close()
-		undatas, _ := ioutil.ReadAll(r)
-		fmt.Println("ungzip size:", len(undatas))
-		str3 := string(undatas[:])
-		fmt.Println(str3)
+	if isZip {
+		buf := bytes.NewBuffer(readBytes)
+		r, _ := gzip.NewReader(buf)
+		if(r != nil) {
+			defer r.Close()
+			undatas, _ := ioutil.ReadAll(r)
+			fmt.Println("ungzip size:", len(undatas))
+			str3 := string(undatas[:])
+			fmt.Println(str3)
+			span.Log(time.Now(), str3)
+		}
+	} else {
+		str2 := string(readBytes[:])
+		fmt.Println(str2)
+		span.Log(time.Now(), str2)
 	}
-
-	str2 := string(readBytes[:])
-	fmt.Println(str2)
-
-	//data.Errno = 501
-	span.Log(time.Now(), str2)
 }
 
 func isZip(w http.ResponseWriter) bool {

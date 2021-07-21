@@ -210,13 +210,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				}
 			}
 
-			if c.Response().Size <= 1000 {
-				//200 响应中notFountCode := "Code:404"
-				//errno 不为空
-				//if()
-
-				logResponse(span, c.Response(), c)
-			}
+			logResponse(span, c.Response(), c)
 
 			span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
 			span.End()
@@ -291,7 +285,15 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 			fmt.Println("ungzip size:", len(undatas))
 			str3 := string(undatas[:])
 			fmt.Println(str3)
-			span.Log(time.Now(), str3)
+
+			if c.Response().Size <= 1000 {
+				//200 响应中notFountCode := "Code:404"
+				//errno 不为空
+				//if()
+				span.Log(time.Now(), str3)
+			} else {
+				span.Log(time.Now(), str3[0 : 999] + "......")
+			}
 		}
 	//} else {
 	//	str2 := string(readBytes[:])

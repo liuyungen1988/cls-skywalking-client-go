@@ -281,7 +281,7 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		readBytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
 
-	if isZip {
+	//if isZip {
 		buf := bytes.NewBuffer(readBytes)
 		r, _ := gzip.NewReader(buf)
 		if(r != nil) {
@@ -292,11 +292,11 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 			fmt.Println(str3)
 			span.Log(time.Now(), str3)
 		}
-	} else {
-		str2 := string(readBytes[:])
-		fmt.Println(str2)
-		span.Log(time.Now(), str2)
-	}
+	//} else {
+	//	str2 := string(readBytes[:])
+	//	fmt.Println(str2)
+	//	span.Log(time.Now(), str2)
+	//}
 }
 
 func isZip(w http.ResponseWriter) bool {

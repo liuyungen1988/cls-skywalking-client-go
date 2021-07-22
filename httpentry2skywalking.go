@@ -15,6 +15,7 @@ import (
 
 	"io"
 	"net"
+	"compress/flate"
 
 	"bufio"
 	"compress/gzip"
@@ -242,6 +243,7 @@ func filter(str string) bool {
 		"code:\"132\"", /**用户不存在**/
 		"验证码错误",
 		"请登录",
+		"未登录",
 		"该文章正在被审核",
 		"非草稿箱内容或者不存在",
 		"视频还未处于可正常播放状态",
@@ -296,7 +298,11 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 
 	//if isZip {
 	buf := bytes.NewBuffer(readBytes)
-	r, _ := gzip.NewReader(buf)
+	r:= flate.NewReader(buf)
+	if(r == nil) {
+		r, _= gzip.NewReader(buf)
+	}
+
 	if r != nil {
 		defer r.Close()
 		undatas, _ := ioutil.ReadAll(r)

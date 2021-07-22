@@ -225,7 +225,7 @@ func dologResponse(err error, c echo.Context) {
 		span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
 	}
 	if err != nil {
-		errorStr := fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err)
+		errorStr := fmt.Sprintf("code:%s, 错误响应： %+v", strconv.Itoa(code), err)
 		needFilter := filter(errorStr)
 		if needFilter {
 			span.Log(time.Now(), errorStr)

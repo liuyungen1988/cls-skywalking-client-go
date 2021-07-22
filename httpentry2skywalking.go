@@ -298,9 +298,10 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 
 	//if isZip {
 	buf := bytes.NewBuffer(readBytes)
-	r:= flate.NewReader(buf)
+	r, _ := gzip.NewReader(buf)
+
 	if(r == nil) {
-		r, _= gzip.NewReader(buf)
+		r = flate.NewReader(buf).(*gzip.Reader)
 	}
 
 	if r != nil {

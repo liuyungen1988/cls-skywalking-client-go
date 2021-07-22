@@ -18,6 +18,7 @@ import (
 
 	"bufio"
 	"compress/gzip"
+	"sync"
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
@@ -135,6 +136,8 @@ func EndLogForCron(span go2sky.Span, taskName, result string) {
 	span.End()
 }
 
+var rwmForLog      sync.RWMutex
+
 func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
 		if GRPCTracer == nil {
@@ -142,6 +145,9 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			err = next(c)
 			return
 		}
+
+		rwmForLog.Lock()
+		defer rwmForLog.Unlock()
 		c.Set("tracer", GRPCTracer)
 		c.Set("header", newSafeHeader(c.Request().Header))
 		SetContext(c)

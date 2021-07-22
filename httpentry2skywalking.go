@@ -310,7 +310,8 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 			undatas, _ = ioutil.ReadAll(newR)
 	    }
      } else {
-		undatas = readBytes
+		newR := bytes.NewReader(readBytes)
+		undatas, _ = ioutil.ReadAll(newR)
 	}
 
 	fmt.Println("ungzip size:", len(undatas))

@@ -26,6 +26,7 @@ import (
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"github.com/labstack/echo/v4"
+
 )
 
 var GRPCReporter go2sky.Reporter
@@ -144,7 +145,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Set("tracer", GRPCTracer)
 		c.Set("header", newSafeHeader(c.Request().Header))
 		SetContext(c)
-		defer DeleteContext()
+		//defer DeleteContext()
 		//c.Set("advo", c.Request().Body.AdVo)
 		requestUrlArray := strings.Split(c.Request().RequestURI, "?")
 		requestParams := getRequestParams(requestUrlArray)
@@ -198,7 +199,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		err = next(c)
 
 		defer func() {
-          go  dologResponse(err, c)
+			dologResponse(err, c)
 		}()
 		return
 	}
@@ -210,7 +211,6 @@ func dologResponse(err error, c echo.Context) {
 	}
 
 	span := c.Get("span").(go2sky.Span)
-
 
 	logResponse(span, c.Response(), c)
 
@@ -233,7 +233,7 @@ func dologResponse(err error, c echo.Context) {
 
 func filter(str string) bool {
 	var list = []string{"code:\"20101\"", "code:\"10212\"", "无审核权限",
-		"code:\"132\"",  /**用户不存在**/
+		"code:\"132\"", /**用户不存在**/
 		"验证码错误",
 		"请登录",
 		"该文章正在被审核",
@@ -277,11 +277,10 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 
 	NewW := res.Writer
 
-
 	var readBytes []byte
 	//支持GZIP
 	isZip := isZip(NewW)
-	if  isZip {
+	if isZip {
 		responseWriter := reflect.Indirect(reflect.ValueOf(NewW).Elem().FieldByName("ResponseWriter").Elem()).FieldByName("w")
 		buffioWriter := reflect.Indirect(responseWriter)
 		readBytes = reflect.Indirect(buffioWriter.FieldByName("buf")).Bytes()
@@ -290,24 +289,24 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	}
 
 	//if isZip {
-		buf := bytes.NewBuffer(readBytes)
-		r, _ := gzip.NewReader(buf)
-		if(r != nil) {
-			defer r.Close()
-			undatas, _ := ioutil.ReadAll(r)
-			fmt.Println("ungzip size:", len(undatas))
-			str3 := string(undatas[:])
-			fmt.Println(str3)
+	buf := bytes.NewBuffer(readBytes)
+	r, _ := gzip.NewReader(buf)
+	if r != nil {
+		defer r.Close()
+		undatas, _ := ioutil.ReadAll(r)
+		fmt.Println("ungzip size:", len(undatas))
+		str3 := string(undatas[:])
+		fmt.Println(str3)
 
-			if c.Response().Size <= 1000 {
-				//200 响应中notFountCode := "Code:404"
-				//errno 不为空
-				//if()
-				span.Log(time.Now(), str3)
-			} else {
-				span.Log(time.Now(), str3[0 : 999] + "......")
-			}
+		if c.Response().Size <= 1000 {
+			//200 响应中notFountCode := "Code:404"
+			//errno 不为空
+			//if()
+			span.Log(time.Now(), str3)
+		} else {
+			span.Log(time.Now(), str3[0:999]+"......")
 		}
+	}
 	//} else {
 	//	str2 := string(readBytes[:])
 	//	fmt.Println(str2)
@@ -322,11 +321,11 @@ func isZip(w http.ResponseWriter) bool {
 		return false
 	}
 	m := reflect.ValueOf(w).Elem().FieldByName("Writer").Interface().(*gzip.Writer)
-    typeOfHeader := reflect.TypeOf(m.Header)
-	typeOfHeaderStr := typeOfHeader.PkgPath() + "." +  typeOfHeader.Name()
+	typeOfHeader := reflect.TypeOf(m.Header)
+	typeOfHeaderStr := typeOfHeader.PkgPath() + "." + typeOfHeader.Name()
 
-	if(typeOfHeaderStr == "compress/gzip.Header") {
-        return true
+	if typeOfHeaderStr == "compress/gzip.Header" {
+		return true
 	}
 
 	return false

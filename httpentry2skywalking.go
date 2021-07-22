@@ -300,31 +300,29 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	buf := bytes.NewBuffer(readBytes)
 	r, _ := gzip.NewReader(buf)
 
-	if(r == nil) {
-		r = flate.NewReader(buf).(*gzip.Reader)
-	}
-
+	var undatas []byte
 	if r != nil {
 		defer r.Close()
-		undatas, _ := ioutil.ReadAll(r)
-		fmt.Println("ungzip size:", len(undatas))
-		str3 := string(undatas[:])
-		fmt.Println(str3)
-
-		if c.Response().Size <= 1000 {
-			//200 响应中notFountCode := "Code:404"
-			//errno 不为空
-			//if()
-			span.Log(time.Now(), str3)
-		} else {
-			span.Log(time.Now(), str3[0:999]+"......")
-		}
+		undatas, _ = ioutil.ReadAll(r)
+	} else {
+		newR := flate.NewReader(buf)
+		defer newR.Close()
+		undatas, _ = ioutil.ReadAll(newR)
 	}
-	//} else {
-	//	str2 := string(readBytes[:])
-	//	fmt.Println(str2)
-	//	span.Log(time.Now(), str2)
-	//}
+
+	fmt.Println("ungzip size:", len(undatas))
+	str3 := string(undatas[:])
+	fmt.Println(str3)
+
+	if c.Response().Size <= 1000 {
+		//200 响应中notFountCode := "Code:404"
+		//errno 不为空
+		//if()
+		span.Log(time.Now(), str3)
+	} else {
+		span.Log(time.Now(), str3[0:999]+"......")
+	}
+
 }
 
 func isZip(w http.ResponseWriter) bool {

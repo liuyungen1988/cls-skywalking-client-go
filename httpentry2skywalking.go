@@ -296,18 +296,21 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		readBytes = reflect.ValueOf(NewW).Elem().FieldByName("w").Elem().FieldByName("buf").Bytes()
 	}
 
-	//if isZip {
-	buf := bytes.NewBuffer(readBytes)
-	r, _ := gzip.NewReader(buf)
-
 	var undatas []byte
-	if r != nil {
-		defer r.Close()
-		undatas, _ = ioutil.ReadAll(r)
-	} else {
-		newR := flate.NewReader(buf)
-		defer newR.Close()
-		undatas, _ = ioutil.ReadAll(newR)
+
+	if isZip {
+		buf := bytes.NewBuffer(readBytes)
+		r, _ := gzip.NewReader(buf)
+		if r != nil {
+			defer r.Close()
+			undatas, _ = ioutil.ReadAll(r)
+		} else {
+			newR := flate.NewReader(buf)
+			defer newR.Close()
+			undatas, _ = ioutil.ReadAll(newR)
+	    }
+     } else {
+		undatas = readBytes
 	}
 
 	fmt.Println("ungzip size:", len(undatas))

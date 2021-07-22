@@ -170,6 +170,8 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 				return value, nil
 			})
 
+		c.Set("span", span)
+
 		if err != nil {
 			err = next(c)
 			return
@@ -196,13 +198,19 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		err = next(c)
 
 		defer func() {
-           go dologResponse(span, err, c)
+          go  dologResponse(err, c)
 		}()
 		return
 	}
 }
 
-func dologResponse(span go2sky.Span, err error, c echo.Context) {
+func dologResponse(err error, c echo.Context) {
+	if c.Get("span") == nil {
+		return
+	}
+
+	span := c.Get("span").(go2sky.Span)
+
 
 	logResponse(span, c.Response(), c)
 

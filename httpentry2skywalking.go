@@ -196,27 +196,31 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		err = next(c)
 
 		defer func() {
-			code := c.Response().Status
-			if code >= 400 {
-				span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
-			}
-			if err != nil {
-				errorStr := fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err)
-				needFilter := filter(errorStr)
-				if needFilter {
-					span.Log(time.Now(), errorStr)
-				} else {
-					span.Error(time.Now(), errorStr)
-				}
-			}
-
-			logResponse(span, c.Response(), c)
-
-			span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
-			span.End()
+           go dologResponse(span, err, c)
 		}()
 		return
 	}
+}
+
+func dologResponse(span go2sky.Span, err error, c echo.Context) {
+
+	logResponse(span, c.Response(), c)
+
+	code := c.Response().Status
+	if code >= 400 {
+		span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
+	}
+	if err != nil {
+		errorStr := fmt.Sprintf("code:%s, 错误响应： %#v", strconv.Itoa(code), err)
+		needFilter := filter(errorStr)
+		if needFilter {
+			span.Log(time.Now(), errorStr)
+		} else {
+			span.Error(time.Now(), errorStr)
+		}
+	}
+	span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
+	span.End()
 }
 
 func filter(str string) bool {
@@ -264,6 +268,7 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	//res.Writer = grw
 
 	NewW := res.Writer
+
 
 	var readBytes []byte
 	//支持GZIP

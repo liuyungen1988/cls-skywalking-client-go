@@ -316,7 +316,7 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	str3 := string(undatas[:])
 	fmt.Println(str3)
 
-	if c.Response().Size <= 1000 {
+	if len(str3) <= 1000 {
 		//200 响应中notFountCode := "Code:404"
 		//errno 不为空
 		//if()

@@ -15,7 +15,7 @@ import (
 
 	"io"
 	"net"
-	//"compress/flate"
+	"compress/flate"
 
 	"bufio"
 	"compress/gzip"
@@ -28,7 +28,6 @@ import (
 
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
 	"github.com/labstack/echo/v4"
-
 )
 
 var GRPCReporter go2sky.Reporter
@@ -299,33 +298,20 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	var undatas []byte
 	var err error
 
-	//gzipID1     = 0x1f
-	//gzipID2     = 0x8b
-	//gzipDeflate = 8
 	if isZip {
-	    var gzipHeader []byte
-	    gzipHeader =  []byte{0x1f, 0x8b, 8}
-
-		if gzipHeader[0] != readBytes[0] || gzipHeader[1] != readBytes[1] || gzipHeader[2] == readBytes[2] {
-			var buffer bytes.Buffer //Buffer是一个实现了读写方法的可变大小的字节缓冲
-			buffer.Write(gzipHeader)
-			buffer.Write(readBytes)
-			readBytes =buffer.Bytes()  //得到了b1+b2的结果
+		buf := bytes.NewBuffer(readBytes)
+		r, _ := gzip.NewReader(buf)
+		if r != nil {
+			defer r.Close()
+			undatas, err = ioutil.ReadAll(r)
+			span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
+		} else {
+			newR := flate.NewReader(buf)
+			defer newR.Close()
+			undatas, err = ioutil.ReadAll(newR)
+			span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		}
-	}
-
-	buf := bytes.NewBuffer(readBytes)
-	r, _ := gzip.NewReader(buf)
-	if r != nil {
-		defer r.Close()
-		undatas, err = ioutil.ReadAll(r)
-	}
-	//else {
-	//	newR := flate.NewReader(buf)
-	//	defer newR.Close()
-	//	undatas, err = ioutil.ReadAll(newR)
-	//}
-	if err != nil {
+	} else {
 		undatas = readBytes
 	}
 	newR := bytes.NewReader(undatas)

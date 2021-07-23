@@ -303,12 +303,10 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	//gzipID2     = 0x8b
 	//gzipDeflate = 8
 	if isZip {
-		var gzipHeader []byte
-		gzipHeader[0] = 0x1f
-		gzipHeader[1] =  0x8b
-		gzipHeader[2] =  8
+	    var gzipHeader []byte
+	    gzipHeader =  []byte{0x1f, 0x8b, 8}
 
-		if gzipHeader[0] != readBytes[0] || gzipHeader[1] != readBytes[1] || gzipHeader[12] != readBytes[2] {
+		if gzipHeader[0] == readBytes[0] && gzipHeader[1] == readBytes[1] && gzipHeader[2] == readBytes[2] {
 			var buffer bytes.Buffer //Buffer是一个实现了读写方法的可变大小的字节缓冲
 			buffer.Write(gzipHeader)
 			buffer.Write(readBytes)

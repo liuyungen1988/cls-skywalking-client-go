@@ -15,7 +15,7 @@ import (
 
 	"io"
 	"net"
-	"compress/flate"
+	//"compress/flate"
 
 	"bufio"
 	"compress/gzip"
@@ -299,17 +299,34 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	var undatas []byte
 	var err error
 
+	//gzipID1     = 0x1f
+	//gzipID2     = 0x8b
+	//gzipDeflate = 8
+	if isZip {
+		var gzipHeader []byte
+		gzipHeader[0] = 0x1f
+		gzipHeader[1] =  0x8b
+		gzipHeader[2] =  8
+
+		if gzipHeader[0] != readBytes[0] || gzipHeader[1] != readBytes[1] || gzipHeader[12] != readBytes[2] {
+			var buffer bytes.Buffer //Buffer是一个实现了读写方法的可变大小的字节缓冲
+			buffer.Write(gzipHeader)
+			buffer.Write(readBytes)
+			readBytes =buffer.Bytes()  //得到了b1+b2的结果
+		}
+	}
 
 	buf := bytes.NewBuffer(readBytes)
 	r, _ := gzip.NewReader(buf)
 	if r != nil {
 		defer r.Close()
 		undatas, err = ioutil.ReadAll(r)
-	} else {
-		newR := flate.NewReader(buf)
-		defer newR.Close()
-		undatas, err = ioutil.ReadAll(newR)
 	}
+	//else {
+	//	newR := flate.NewReader(buf)
+	//	defer newR.Close()
+	//	undatas, err = ioutil.ReadAll(newR)
+	//}
 	if err != nil {
 		undatas = readBytes
 	}

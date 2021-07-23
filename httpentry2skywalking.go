@@ -297,17 +297,21 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	}
 
 	var undatas []byte
+	var err error
 
 
 	buf := bytes.NewBuffer(readBytes)
 	r, _ := gzip.NewReader(buf)
 	if r != nil {
 		defer r.Close()
-		undatas, _ = ioutil.ReadAll(r)
+		undatas, err = ioutil.ReadAll(r)
 	} else {
 		newR := flate.NewReader(buf)
 		defer newR.Close()
-		undatas, _ = ioutil.ReadAll(newR)
+		undatas, err = ioutil.ReadAll(newR)
+	}
+	if err != nil {
+		undatas = readBytes
 	}
 	newR := bytes.NewReader(undatas)
 	undatas, _ = ioutil.ReadAll(newR)

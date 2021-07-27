@@ -218,7 +218,12 @@ func dologResponse(err error, c echo.Context) {
 
 	span := c.Get("span").(go2sky.Span)
 
-	logResponse(span, c.Response(), c)
+	if c.Response().Size < 10000 {
+		logResponse(span, c.Response(), c)
+	} else {
+		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
+	}
+
 
 	code := c.Response().Status
 	if code >= 400 {

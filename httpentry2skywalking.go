@@ -309,11 +309,13 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		if r != nil {
 			defer r.Close()
 			undatas, err = ioutil.ReadAll(r)
+			fmt.Printf("gzip ioutil.ReadAll  error ： %+v", err)
 			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		} else {
 			newR := flate.NewReader(buf)
 			defer newR.Close()
 			undatas, err = ioutil.ReadAll(newR)
+			fmt.Printf("flate ioutil.ReadAll  error ： %+v", err)
 			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		}
 	} else {

@@ -309,12 +309,12 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		if r != nil {
 			defer r.Close()
 			undatas, err = ioutil.ReadAll(r)
-			span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
+			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		} else {
 			newR := flate.NewReader(buf)
 			defer newR.Close()
 			undatas, err = ioutil.ReadAll(newR)
-			span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
+			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		}
 	} else {
 		undatas = readBytes

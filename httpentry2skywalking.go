@@ -204,14 +204,16 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 		err = next(c)
 
+
+		traceId := go2sky.TraceID(ctx)
 		defer func() {
-			dologResponse(err, c)
+			dologResponse(err, c, traceId)
 		}()
 		return
 	}
 }
 
-func dologResponse(err error, c echo.Context) {
+func dologResponse(err error, c echo.Context, traceId string) {
 	if c.Get("span") == nil {
 		return
 	}
@@ -219,7 +221,7 @@ func dologResponse(err error, c echo.Context) {
 	span := c.Get("span").(go2sky.Span)
 
 	if c.Response().Size < 10000 {
-		logResponse(span, c.Response(), c)
+		logResponse(span, c.Response(), c, traceId)
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
 	}
@@ -262,30 +264,7 @@ func filter(str string) bool {
 	return false
 }
 
-func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
-
-	//var str string = "test"
-	//
-	//var data []byte = []byte(str)
-	//
-	//rw := res.Writer
-	//w, err := gzip.NewWriterLevel(rw, 9)
-	//w.Write(data)
-	//if err != nil {
-	//
-	//}
-	//defer func() {
-	//	if res.Size == 0 {
-	//		// We have to reset response to it's pristine state when
-	//		// nothing is written to body or error is returned.
-	//		// See issue #424, #407.
-	//		//res.Writer = rw
-	//		//w.Reset(ioutil.Discard)
-	//	}
-	//	w.Close()
-	//}()
-	//grw := &gzipResponseWriter{Writer: w, ResponseWriter: rw}
-	//res.Writer = grw
+func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) {
 
 	NewW := res.Writer
 
@@ -309,13 +288,13 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 		if r != nil {
 			defer r.Close()
 			undatas, err = ioutil.ReadAll(r)
-			fmt.Printf("gzip ioutil.ReadAll  error ： %+v", err)
+			fmt.Printf("traceId:%s, gzip ioutil.ReadAll  error ： %+v", traceId, err)
 			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		} else {
 			newR := flate.NewReader(buf)
 			defer newR.Close()
 			undatas, err = ioutil.ReadAll(newR)
-			fmt.Printf("flate ioutil.ReadAll  error ： %+v", err)
+			fmt.Printf("traceId:%s, flate ioutil.ReadAll  error ： %+v", traceId, err)
 			//span.Error(time.Now(), fmt.Sprintf("ioutil.ReadAll error ： %+v", err))
 		}
 	} else {
@@ -324,9 +303,10 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context) {
 	newR := bytes.NewReader(undatas)
 	undatas, _ = ioutil.ReadAll(newR)
 
-	fmt.Println("ungzip size:", len(undatas))
 	str3 := string(undatas[:])
-	fmt.Println(str3)
+	fmt.Println("")
+	fmt.Println("ungzip size:", len(undatas))
+	fmt.Println("traceId: ", traceId, " data:", str3)
 
 	if len(str3) <= 1000 {
 		//200 响应中notFountCode := "Code:404"

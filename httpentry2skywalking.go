@@ -287,7 +287,15 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 	var undatas []byte
 	var err error
 
-	if isZip {
+	hasZipHeader := false
+	if len(readBytes) >= 3 {
+		hasZipHeader = readBytes[0] == 0x1f && readBytes[1] == 0x8b && readBytes[2] == 8
+		if !isZip {
+			fmt.Printf("traceId:%s, 可能因为反射串场了.", traceId)
+		}
+	}
+
+	if isZip || hasZipHeader {
 		buf := bytes.NewBuffer(readBytes)
 		r, _ := gzip.NewReader(buf)
 		if r != nil {
@@ -311,15 +319,15 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 	str3 := string(undatas[:])
 	fmt.Println("")
 	fmt.Println("ungzip size:", len(undatas))
-	fmt.Println("traceId: ", traceId, " data:", str3)
+	fmt.Printf("traceId : %s , data :%s", traceId,  str3)
 
-	if len(str3) <= 1000 {
+	if len(str3) <= 2048 {
 		//200 响应中notFountCode := "Code:404"
 		//errno 不为空
 		//if()
-		span.Log(time.Now(), str3)
+		span.Log(time.Now(), "打印响应： " + str3)
 	} else {
-		span.Log(time.Now(), str3[0:999]+"......")
+		span.Log(time.Now(), "打印响应： " + str3[0:999]+"......")
 	}
 
 }

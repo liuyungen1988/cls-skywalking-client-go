@@ -117,6 +117,8 @@ func StartLogForCron(e *echo.Echo, taskName string) go2sky.Span {
 		return nil
 	}
 
+	c.Set("context", ctx)
+
 	span.SetComponent(componentIDGOHttpServer)
 	span.Tag(go2sky.TagHTTPMethod, "GET")
 	span.Tag(go2sky.TagURL, taskName)

@@ -2,6 +2,7 @@ package cls_skywalking_client_go
 
 import (
 	"fmt"
+	"context"
 
 	"bytes"
 	"io/ioutil"
@@ -178,6 +179,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 
 		c.Set("span", span)
+		c.Set("context", ctx)
 
 		if err != nil {
 			err = next(c)
@@ -205,7 +207,8 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		err = next(c)
 
 
-		traceId := go2sky.TraceID(ctx)
+		//traceId := go2sky.TraceID(ctx)
+		traceId := GetGlobalTraceId()
 		defer func() {
 			dologResponse(err, c, traceId)
 		}()
@@ -436,4 +439,18 @@ func getRequestParams(requestUrlArray []string) string {
 		return requestUrlArray[1]
 	}
 	return ""
+}
+
+
+func GetGlobalTraceId() string {
+	originCtx := GetContext()
+	if originCtx == nil {
+		return ""
+	}
+	ctx := originCtx.(echo.Context)
+	if ctx.Get("context") == nil {
+		return ""
+	}
+	traceId := go2sky.TraceID(ctx.Get("context").(context.Context))
+	return traceId
 }

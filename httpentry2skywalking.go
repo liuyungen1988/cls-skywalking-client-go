@@ -215,10 +215,10 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		//traceId := go2sky.TraceID(ctx)
-		traceId := GetGlobalTraceId()
-		defer func() {
-			dologResponse(err, c, traceId)
-		}()
+		//traceId := GetGlobalTraceId()
+		//defer func() {
+		//	dologResponse(err, c, traceId)
+		//}()
 		return
 	}
 }

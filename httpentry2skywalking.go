@@ -209,6 +209,11 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		err = next(c)
 
 
+		proto := c.Request().Proto
+		if  proto != "HTTP/1.1" {
+			return
+		}
+		
 		//traceId := go2sky.TraceID(ctx)
 		traceId := GetGlobalTraceId()
 		defer func() {

@@ -230,7 +230,7 @@ func dologResponse(err error, c echo.Context, traceId string) {
 
 	span := c.Get("span").(go2sky.Span)
 
-	if c.Response().Size < 5000 {
+	if c.Response().Size < 3000 {
 		logResponse(span, c.Response(), c, traceId)
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
@@ -250,6 +250,7 @@ func dologResponse(err error, c echo.Context, traceId string) {
 			span.Error(time.Now(), errorStr)
 		}
 	}
+
 	span.Tag(go2sky.TagStatusCode, strconv.Itoa(code))
 	span.End()
 }
@@ -275,7 +276,7 @@ func filter(str string) bool {
 }
 
 func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) {
-
+	t:=time.Now().Second()
 	NewW := res.Writer
 
 	var readBytes []byte
@@ -334,6 +335,10 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 	} else {
 		span.Log(time.Now(), "打印响应： " + str3[0:999]+"......")
 	}
+
+	costTime := time.Now().Second() - t
+
+	span.Log(time.Now(), "print response costTime： " + strconv.FormatInt(costTime,10) )
 
 }
 

@@ -338,7 +338,7 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 
 	costTime := time.Now().Unix() - t
 
-	span.Log(time.Now(), "print response costTime： " + costTime)
+	span.Log(time.Now(), "print response costTime： " + strconv.FormatInt(costTime,10))
 
 }
 

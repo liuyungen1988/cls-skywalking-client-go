@@ -213,7 +213,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		if  proto != "HTTP/1.1" {
 			return
 		}
-		
+
 		//traceId := go2sky.TraceID(ctx)
 		traceId := GetGlobalTraceId()
 		defer func() {
@@ -230,7 +230,7 @@ func dologResponse(err error, c echo.Context, traceId string) {
 
 	span := c.Get("span").(go2sky.Span)
 
-	if c.Response().Size < 10000 {
+	if c.Response().Size < 5000 {
 		logResponse(span, c.Response(), c, traceId)
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))

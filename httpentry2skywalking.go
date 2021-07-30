@@ -149,8 +149,8 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 			return
 		}
 
-		rwmForLog.Lock()
-		defer rwmForLog.Unlock()
+		//rwmForLog.Lock()
+		//defer rwmForLog.Unlock()
 		c.Set("tracer", GRPCTracer)
 		c.Set("header", newSafeHeader(c.Request().Header))
 		SetContext(c)

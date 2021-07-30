@@ -276,7 +276,7 @@ func filter(str string) bool {
 }
 
 func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) {
-	t:=time.Now().Second()
+	t:=time.Now().Unix()
 	NewW := res.Writer
 
 	var readBytes []byte
@@ -336,9 +336,9 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 		span.Log(time.Now(), "打印响应： " + str3[0:999]+"......")
 	}
 
-	costTime := time.Now().Second() - t
+	costTime := time.Now().Unix() - t
 
-	span.Log(time.Now(), "print response costTime： " + strconv.FormatInt(costTime,10) )
+	span.Log(time.Now(), "print response costTime： " + costTime)
 
 }
 

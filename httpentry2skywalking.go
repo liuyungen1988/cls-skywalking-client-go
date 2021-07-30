@@ -154,7 +154,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Set("tracer", GRPCTracer)
 		c.Set("header", newSafeHeader(c.Request().Header))
 		SetContext(c)
-		defer DeleteContext()
+		//defer DeleteContext()
 		//c.Set("advo", c.Request().Body.AdVo)
 		requestUrlArray := strings.Split(c.Request().RequestURI, "?")
 		requestParams := getRequestParams(requestUrlArray)
@@ -215,10 +215,10 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		//traceId := go2sky.TraceID(ctx)
-		//traceId := GetGlobalTraceId()
-		//defer func() {
-		//	dologResponse(err, c, traceId)
-		//}()
+		traceId := GetGlobalTraceId()
+		defer func() {
+			dologResponse(err, c, traceId)
+		}()
 		return
 	}
 }

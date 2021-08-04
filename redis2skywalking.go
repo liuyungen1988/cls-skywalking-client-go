@@ -168,6 +168,13 @@ func (f RedisProxy) HGet(key, field string) *redis.StringCmd {
 	cmd := f.getRedisCache().HGet(key, field)
 
 	_, err := cmd.Result()
+
+	if(err != nil) {
+		errStr := fmt.Sprintf("%s", err)
+		if(errStr == "redis: nil"){
+			err = nil
+		}
+	}
 	defer processResult(span, fmt.Sprintf("HGet %s, field %s", key, field),
 		err)
 	return cmd

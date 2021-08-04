@@ -265,7 +265,13 @@ func filter(str string) bool {
 		"非草稿箱内容或者不存在",
 		"视频还未处于可正常播放状态",
 		"板块不能为空",
-		"正在编辑中"}
+		"正在编辑中",
+		"用户权限不足",
+		"正在编辑中",
+		"重复",
+		"稍后再试",
+		"无法修改",
+		"操作失败"}
 	for ingorestrIndex := range list {
 
 		if strings.Contains(str, list[ingorestrIndex]) {

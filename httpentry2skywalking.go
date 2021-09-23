@@ -338,7 +338,20 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 		//200 响应中notFountCode := "Code:404"
 		//errno 不为空
 		//if()
-		span.Log(time.Now(), "打印响应： " + str3)
+		var errstrList = []string{"\"errno\":500", "\"errno\":50101", "\"errno\":10000"}
+		var  isError = false
+		for errorIndex := range errstrList {
+			if strings.Contains(str3, errstrList[errorIndex]) {
+				isError = true
+				break;
+			}
+		}
+
+		if  isError {
+			span.Error(time.Now(), "打印响应： " + str3)
+		} else  {
+			span.Log(time.Now(), "打印响应： " + str3)
+		}
 	} else {
 		span.Log(time.Now(), "打印响应： " + str3[0:999]+"......")
 	}

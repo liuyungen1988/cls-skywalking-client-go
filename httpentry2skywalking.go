@@ -22,7 +22,6 @@ import (
 	"compress/gzip"
 	"sync"
 
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git/util"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
 	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter"
 	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
@@ -190,7 +189,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 		span.SetComponent(componentIDGOHttpServer)
 		span.Tag(go2sky.TagHTTPMethod, c.Request().Method)
-		span.Tag(go2sky.TagURL, c.Request().Host+c.Path())
+		span.Tag(go2sky.TagURL, c.Request().Host+c.Request().URL.Path)
 		span.SetSpanLayer(v3.SpanLayer_Http)
 		c.SetRequest(c.Request().WithContext(ctx))
 
@@ -467,9 +466,9 @@ func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 
 func getoperationName(c echo.Context, requestParamMap map[string]string, requestUrlArray []string) string {
 	if requestParamMap["os"] == "" {
-		return fmt.Sprintf("%s%s", c.Request().Method, util.ReplaceNumber(requestUrlArray[0]))
+		return fmt.Sprintf("%s%s", c.Request().Method, c.Path())
 	} else {
-		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, util.ReplaceNumber(requestUrlArray[0]))
+		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, c.Path())
 	}
 }
 

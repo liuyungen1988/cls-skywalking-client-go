@@ -190,7 +190,7 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 		span.SetComponent(componentIDGOHttpServer)
 		span.Tag(go2sky.TagHTTPMethod, c.Request().Method)
-		span.Tag(go2sky.TagURL, c.Request().Host+c.Request().URL.Path)
+		span.Tag(go2sky.TagURL, c.Request().Host+c.Path())
 		span.SetSpanLayer(v3.SpanLayer_Http)
 		c.SetRequest(c.Request().WithContext(ctx))
 

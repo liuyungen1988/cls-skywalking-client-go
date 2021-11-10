@@ -1,7 +1,7 @@
 package test
 
 import (
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/cls-skywalking-client-go.git"
+	"github.com/liuyungen1988/cls-skywalking-client-go"
 	"fmt"
 	"testing"
 )

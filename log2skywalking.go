@@ -1,7 +1,7 @@
 package cls_skywalking_client_go
 
 import (
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
+	"github.com/liuyungen1988/go2sky"
 	"log"
 	"strings"
 	"time"

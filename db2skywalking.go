@@ -12,9 +12,9 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	sq "github.com/Masterminds/squirrel"
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git"
-	"codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/propagation"
-	v3 "codehub-cn-east-2.devcloud.huaweicloud.com/jgz00001/go2sky.git/reporter/grpc/language-agent"
+	"github.com/liuyungen1988/go2sky"
+	"github.com/liuyungen1988/go2sky/propagation"
+	v3 "github.com/liuyungen1988/go2sky/reporter/grpc/language-agent"
 	"os"
 	"github.com/labstack/echo/v4"
 )

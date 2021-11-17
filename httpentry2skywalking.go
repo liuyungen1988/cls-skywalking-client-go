@@ -1,8 +1,8 @@
 package cls_skywalking_client_go
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"bytes"
 	"io/ioutil"
@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"compress/flate"
 	"io"
 	"net"
-	"compress/flate"
 
 	"bufio"
 	"compress/gzip"
@@ -26,8 +26,8 @@ import (
 	"github.com/liuyungen1988/go2sky/reporter"
 	v3 "github.com/liuyungen1988/go2sky/reporter/grpc/language-agent"
 
-	"github.com/liuyungen1988/go2sky"
 	"github.com/labstack/echo/v4"
+	"github.com/liuyungen1988/go2sky"
 )
 
 var GRPCReporter go2sky.Reporter
@@ -268,6 +268,7 @@ func filter(str string) bool {
 		"用户权限不足",
 		"正在编辑中",
 		"提交过快",
+		"操作过快",
 		"重复",
 		"稍后再试",
 		"无法修改",

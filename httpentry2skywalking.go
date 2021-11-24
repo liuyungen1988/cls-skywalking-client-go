@@ -138,7 +138,7 @@ func EndLogForCron(span go2sky.Span, taskName, result string) {
 	span.End()
 }
 
-var rwmForLog      sync.RWMutex
+var rwmForLog sync.RWMutex
 
 func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
@@ -207,9 +207,8 @@ func LogToSkyWalking(next echo.HandlerFunc) echo.HandlerFunc {
 
 		err = next(c)
 
-
 		proto := c.Request().Proto
-		if  proto != "HTTP/1.1" {
+		if proto != "HTTP/1.1" {
 			return
 		}
 
@@ -234,7 +233,6 @@ func dologResponse(err error, c echo.Context, traceId string) {
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
 	}
-
 
 	code := c.Response().Status
 	if code >= 400 {
@@ -274,16 +272,24 @@ func filter(str string) bool {
 		"无法修改",
 		"操作失败"}
 	for ingorestrIndex := range list {
-
 		if strings.Contains(str, list[ingorestrIndex]) {
 			return true
+		}
+	}
+	var  ingoreErrors string = os.Getenv("USE_SKYWALKING_INGORE_ERRORS")
+	if  ingoreErrors != "" {
+		ingoreErrorArray := strings.Split(ingoreErrors, ",")
+		for ingorestrIndex := range ingoreErrorArray {
+			if strings.Contains(str, ingoreErrorArray[ingorestrIndex]) {
+				return true
+			}
 		}
 	}
 	return false
 }
 
 func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) {
-	t:=time.Now().Unix()
+	t := time.Now().Unix()
 	NewW := res.Writer
 
 	var readBytes []byte
@@ -332,33 +338,33 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 	str3 := string(undatas[:])
 	fmt.Println("")
 	fmt.Println("ungzip size:", len(undatas))
-	fmt.Printf("traceId : %s , data :%s", traceId,  str3)
+	fmt.Printf("traceId : %s , data :%s", traceId, str3)
 
 	if len(str3) <= 2048 {
 		//200 响应中notFountCode := "Code:404"
 		//errno 不为空
 		//if()
 		var errstrList = []string{"\"errno\":500", "\"errno\":50101", "\"errno\":10000"}
-		var  isError = false
+		var isError = false
 		for errorIndex := range errstrList {
 			if strings.Contains(str3, errstrList[errorIndex]) {
 				isError = true
-				break;
+				break
 			}
 		}
 
-		if  isError {
-			span.Error(time.Now(), "打印响应： " + str3)
-		} else  {
-			span.Log(time.Now(), "打印响应： " + str3)
+		if isError {
+			span.Error(time.Now(), "打印响应： "+str3)
+		} else {
+			span.Log(time.Now(), "打印响应： "+str3)
 		}
 	} else {
-		span.Log(time.Now(), "打印响应： " + str3[0:999]+"......")
+		span.Log(time.Now(), "打印响应： "+str3[0:999]+"......")
 	}
 
 	costTime := time.Now().Unix() - t
 
-	span.Log(time.Now(), "print response costTime： " + strconv.FormatInt(costTime,10))
+	span.Log(time.Now(), "print response costTime： "+strconv.FormatInt(costTime, 10))
 
 }
 
@@ -466,11 +472,40 @@ func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 }
 
 func getoperationName(c echo.Context, requestParamMap map[string]string, requestUrlArray []string) string {
-	if requestParamMap["os"] == "" {
-		return fmt.Sprintf("%s%s", c.Request().Method, c.Path())
-	} else {
-		return fmt.Sprintf("/%s__%s%s", requestParamMap["os"], c.Request().Method, c.Path())
+	var requestUrl string = fmt.Sprintf("%s%s", c.Request().Method, c.Path())
+	ingoreUrlStarts := os.Getenv("USE_SKYWALKING_INGOREURL_STARTS")
+	if ingoreUrlStarts != "" {
+		ingoreUrlStartArray := strings.Split(ingoreUrlStarts, ",")
+		if startWith(requestUrl, ingoreUrlStartArray) {
+			return ""
+		}
 	}
+	ingoreUrls := os.Getenv("USE_SKYWALKING_INGOREURLS")
+	if ingoreUrls != "" {
+		ingoreUrlArray := strings.Split(ingoreUrlStarts, ",")
+		if isEqual(requestUrl, ingoreUrlArray) {
+			return ""
+		}
+	}
+	return requestUrl
+}
+
+func startWith(requestUrl string, ingoreUrlStartArray []string) bool {
+	for errorIndex := range ingoreUrlStartArray {
+		if strings.HasPrefix(requestUrl, ingoreUrlStartArray[errorIndex]) {
+			return true
+		}
+	}
+	return false
+}
+
+func isEqual(requestUrl string, ingoreUrlStartArray []string) bool {
+	for errorIndex := range ingoreUrlStartArray {
+		if strings.EqualFold(requestUrl, ingoreUrlStartArray[errorIndex]) {
+			return true
+		}
+	}
+	return false
 }
 
 func getRequestParams(requestUrlArray []string) string {
@@ -480,7 +515,6 @@ func getRequestParams(requestUrlArray []string) string {
 	}
 	return ""
 }
-
 
 func GetGlobalTraceId() string {
 	originCtx := GetContext()

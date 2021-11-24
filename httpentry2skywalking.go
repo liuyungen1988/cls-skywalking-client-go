@@ -482,7 +482,7 @@ func getoperationName(c echo.Context, requestParamMap map[string]string, request
 	}
 	ingoreUrls := os.Getenv("USE_SKYWALKING_INGOREURLS")
 	if ingoreUrls != "" {
-		ingoreUrlArray := strings.Split(ingoreUrlStarts, ",")
+		ingoreUrlArray := strings.Split(ingoreUrls, ",")
 		if isEqual(requestUrl, ingoreUrlArray) {
 			return ""
 		}

@@ -492,7 +492,7 @@ func getoperationName(c echo.Context, requestParamMap map[string]string, request
 
 func startWith(requestUrl string, ingoreUrlStartArray []string) bool {
 	for errorIndex := range ingoreUrlStartArray {
-		if strings.HasPrefix(strings.ToLower(requestUrl), ingoreUrlStartArray[errorIndex]) {
+		if strings.HasPrefix(strings.ToLower(requestUrl), strings.ToLower(ingoreUrlStartArray[errorIndex])) {
 			return true
 		}
 	}

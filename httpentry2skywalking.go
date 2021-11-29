@@ -451,6 +451,9 @@ func logWithSearchUseRequestParamMap(requestParamMap map[string]string) string {
 		searchableKeys += fmt.Sprintf("sv=%s", requestParamMap["sv"])
 	}
 	if len(requestParamMap["os"]) != 0 {
+		if len(searchableKeys) != 0 {
+			searchableKeys += ","
+		}
 		searchableKeys += fmt.Sprintf("os=%s", requestParamMap["os"])
 	}
 

@@ -228,21 +228,17 @@ func dologResponse(err error, c echo.Context, traceId string) {
 
 	span := c.Get("span").(go2sky.Span)
 
-	var  responseStr string = ""
+	var  isError bool = false
 	if c.Response().Size < 10000 {
-		responseStr = logResponse(span, c.Response(), c, traceId)
+		isError = logResponse(span, c.Response(), c, traceId)
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
 	}
 
 	code := c.Response().Status
 	if code >= 400 {
-		needFilter := false
-		if len(responseStr) != 0 {
-			needFilter = filter(responseStr)
-		}
-		if needFilter {
-			span.Log(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
+		if !isError {
+			span.Log(time.Now(), fmt.Sprintf("code:%s,  Log on handling request", strconv.Itoa(code)))
 		} else {
 			span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
 		}
@@ -297,7 +293,7 @@ func filter(str string) bool {
 	return false
 }
 
-func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) string {
+func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) bool {
 	t := time.Now().Unix()
 	NewW := res.Writer
 
@@ -349,15 +345,18 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 	fmt.Println("ungzip size:", len(undatas))
 	fmt.Printf("traceId : %s , data :%s", traceId, str3)
 
+	var isError = false
 	if len(str3) <= 2048 {
 		//200 响应中notFountCode := "Code:404"
 		//errno 不为空
 		//if()
 		var errstrList = []string{"\"errno\":500", "\"errno\":50101", "\"errno\":10000"}
-		var isError = false
 		for errorIndex := range errstrList {
 			if strings.Contains(str3, errstrList[errorIndex]) {
-				isError = true
+				needFilter := filter(str3)
+				if  !needFilter {
+					isError = true
+				}
 				break
 			}
 		}
@@ -375,11 +374,7 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 
 	span.Log(time.Now(), "print response costTime： "+strconv.FormatInt(costTime, 10))
 
-	if len(str3) <= 2048 {
-		return  str3
-	} else  {
-		return  ""
-	}
+	return  isError
 }
 
 func isZip(w http.ResponseWriter) bool {

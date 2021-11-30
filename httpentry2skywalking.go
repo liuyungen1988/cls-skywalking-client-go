@@ -228,15 +228,24 @@ func dologResponse(err error, c echo.Context, traceId string) {
 
 	span := c.Get("span").(go2sky.Span)
 
+	var  responseStr string = ""
 	if c.Response().Size < 10000 {
-		logResponse(span, c.Response(), c, traceId)
+		responseStr = logResponse(span, c.Response(), c, traceId)
 	} else {
 		span.Log(time.Now(), fmt.Sprintf("resposne size :%s, too big", strconv.FormatInt(c.Response().Size, 10)))
 	}
 
 	code := c.Response().Status
 	if code >= 400 {
-		span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
+		needFilter := false
+		if len(responseStr) != 0 {
+			needFilter = filter(responseStr)
+		}
+		if needFilter {
+			span.Log(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
+		} else {
+			span.Error(time.Now(), fmt.Sprintf("code:%s,  Error on handling request", strconv.Itoa(code)))
+		}
 	}
 	if err != nil {
 		errorStr := fmt.Sprintf("code:%s, 错误响应： %+v", strconv.Itoa(code), err)
@@ -288,7 +297,7 @@ func filter(str string) bool {
 	return false
 }
 
-func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) {
+func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId string) string {
 	t := time.Now().Unix()
 	NewW := res.Writer
 
@@ -366,6 +375,11 @@ func logResponse(span go2sky.Span, res *echo.Response, c echo.Context, traceId s
 
 	span.Log(time.Now(), "print response costTime： "+strconv.FormatInt(costTime, 10))
 
+	if len(str3) <= 2048 {
+		return  str3
+	} else  {
+		return  ""
+	}
 }
 
 func isZip(w http.ResponseWriter) bool {
